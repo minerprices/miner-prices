@@ -13,7 +13,29 @@ const AdminDashboard = ({ onLogout }) => {
   const [expandedVendor, setExpandedVendor] = useState(null);
 
   useEffect(() => {
-    fetchData();
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        if (activeTab === 'pending') {
+          const response = await adminAPI.getPendingVendors();
+          setPendingVendors(response.data.vendors);
+        } else if (activeTab === 'vendors') {
+          const response = await adminAPI.getAllVendors();
+          setAllVendors(response.data.vendors);
+        } else if (activeTab === 'stats') {
+          const response = await adminAPI.getStats();
+          setStats(response.data);
+        } else if (activeTab === 'logs') {
+          const response = await adminAPI.getSyncLogs();
+          setSyncLogs(response.data.logs);
+        }
+      } catch (err) {
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, [activeTab]);
 
   const fetchData = async () => {

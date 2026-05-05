@@ -11,9 +11,31 @@ const Miners = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchMiners();
-    fetchAlgorithms();
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const response = await minersAPI.getAll(selectedAlgorithm, search);
+        setMiners(response.data.miners);
+      } catch (err) {
+        setError('Failed to fetch miners');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, [selectedAlgorithm, search]);
+
+  useEffect(() => {
+    const loadAlgorithms = async () => {
+      try {
+        const response = await minersAPI.getAlgorithms();
+        setAlgorithms(response.data.algorithms || []);
+      } catch (err) {
+        console.error('Failed to fetch algorithms', err);
+      }
+    };
+    loadAlgorithms();
+  }, []);
 
   const fetchMiners = async () => {
     try {
