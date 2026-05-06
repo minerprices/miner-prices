@@ -11,7 +11,7 @@ function initializeDB() {
   // Run migrations first
   migrateAddPhotos();
   
-  seedComprehensiveData();
+  seedComprehensiveData(db);
   // Create tables
   db.exec(`
     CREATE TABLE IF NOT EXISTS miners (

@@ -20,6 +20,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminSync from './pages/AdminSync';
 import MinerDetailEnhanced from './pages/MinerDetailEnhanced';
 import AdminImageManager from './pages/AdminImageManager';
+import TestUpload from './pages/TestUpload';
 import Navigation from './components/Navigation';
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
         <Route path="/comparison" element={<Comparison />} />
         <Route path="/vendors" element={<Vendors />} />
         <Route path="/tools" element={<Tools />} />
+        <Route path="/test-upload" element={<TestUpload />} />
         
         <Route path="/vendor/login" element={<VendorLogin onLogin={handleLogin} />} />
         <Route path="/vendor/register" element={<VendorRegister onLogin={handleLogin} />} />
