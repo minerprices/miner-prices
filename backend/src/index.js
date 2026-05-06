@@ -12,6 +12,8 @@ const initRoutes = require('./routes/init-rest');
 const profitabilityRoutes = require('./routes/profitability');
 const calculatorRoutes = require('./routes/calculator');
 const vendorsRoutes = require('./routes/vendors');
+const toolsRoutes = require('./routes/tools');
+const { updateCoinPrices } = require('./services/coingecko');
 const { syncMiners } = require('./jobs/syncMiners');
 const { initializeDB } = require('./db/sqlite-init');
 
@@ -37,6 +39,16 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/profitability', profitabilityRoutes);
 app.use('/api/calculator', calculatorRoutes);
 app.use('/api/vendors', vendorsRoutes);
+app.use('/api/tools', toolsRoutes);
+
+// Update coin prices from CoinGecko every hour
+setInterval(async () => {
+  try {
+    await updateCoinPrices(db);
+  } catch (error) {
+    console.error('CoinGecko update error:', error);
+  }
+}, 3600000); // 1 hour
 
 // Health check
 app.get('/health', (req, res) => {
