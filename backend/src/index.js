@@ -10,13 +10,13 @@ const locationsRoutes = require('./routes/locations');
 const adminRoutes = require('./routes/admin');
 const initRoutes = require('./routes/init-rest');
 const { syncMiners } = require('./jobs/syncMiners');
-const { autoMigrate } = require('./db/auto-migrate');
+const { setupTables } = require('./db/setup-tables');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Auto-migrate on startup
-autoMigrate().catch(err => console.error('Migration failed:', err));
+// Setup tables on startup
+setupTables().catch(err => console.error('Setup failed:', err));
 
 // Middleware
 app.use(helmet());

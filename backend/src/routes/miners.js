@@ -63,14 +63,13 @@ router.get('/api/algorithms', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('miners')
-      .select('algorithm')
-      .is_not('algorithm', null);
+      .select('algorithm');
 
     if (error) {
       return res.status(500).json({ error: error.message });
     }
 
-    const algorithms = [...new Set(data?.map(m => m.algorithm) || [])];
+    const algorithms = [...new Set(data?.map(m => m.algorithm).filter(Boolean) || [])];
     res.json({ algorithms });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
