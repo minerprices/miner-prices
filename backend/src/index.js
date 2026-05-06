@@ -54,7 +54,13 @@ setInterval(async () => {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date(), images: 'ready' });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date(), 
+    images: 'working',
+    upload: '/api/upload',
+    list: '/api/images/list'
+  });
 });
 
 // 404 handler
