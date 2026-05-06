@@ -62,6 +62,20 @@ const AdminDashboard = ({ onLogout }) => {
     }
   };
 
+  const handleSyncMiners = async () => {
+    try {
+      setError('');
+      const response = await adminAPI.syncMiners();
+      setError(`✓ Sync started: ${response.data.message}`);
+      setTimeout(() => {
+        setError('');
+        setActiveTab('stats'); // Trigger refresh
+      }, 3000);
+    } catch (err) {
+      setError('Failed to trigger miner sync: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
   return (
     <div className="container">
       <div className="dashboard-header">
@@ -103,24 +117,37 @@ const AdminDashboard = ({ onLogout }) => {
       ) : (
         <>
           {activeTab === 'stats' && stats && (
-            <div className="stats">
-              <div className="stat-card">
-                <div className="stat-value">{stats.vendors.total}</div>
-                <div className="stat-label">Total Vendors</div>
-                <div className="stat-label">({stats.vendors.approved} approved)</div>
+            <>
+              <div className="stats">
+                <div className="stat-card">
+                  <div className="stat-value">{stats.vendors.total}</div>
+                  <div className="stat-label">Total Vendors</div>
+                  <div className="stat-label">({stats.vendors.approved} approved)</div>
+                </div>
+                
+                <div className="stat-card">
+                  <div className="stat-value">{stats.miners.total}</div>
+                  <div className="stat-label">Active Miners</div>
+                  <div className="stat-label">({stats.miners.algorithms} algorithms)</div>
+                </div>
+                
+                <div className="stat-card">
+                  <div className="stat-value">{stats.locations.total}</div>
+                  <div className="stat-label">Hosting Locations</div>
+                </div>
               </div>
               
-              <div className="stat-card">
-                <div className="stat-value">{stats.miners.total}</div>
-                <div className="stat-label">Active Miners</div>
-                <div className="stat-label">({stats.miners.algorithms} algorithms)</div>
+              <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+                <h3>WhattoMine Sync</h3>
+                <p>Manually trigger miner sync from WhattoMine API</p>
+                <button 
+                  onClick={handleSyncMiners}
+                  style={{ backgroundColor: '#2196f3', marginTop: '10px' }}
+                >
+                  🔄 Sync Miners Now
+                </button>
               </div>
-              
-              <div className="stat-card">
-                <div className="stat-value">{stats.locations.total}</div>
-                <div className="stat-label">Hosting Locations</div>
-              </div>
-            </div>
+            </>
           )}
 
           {activeTab === 'pending' && (

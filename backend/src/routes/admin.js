@@ -180,4 +180,25 @@ router.get('/stats', adminAuth, async (req, res) => {
   }
 });
 
+// Manual trigger for miner sync
+router.post('/sync-miners', adminAuth, async (req, res) => {
+  try {
+    const { syncMiners } = require('../jobs/syncMiners');
+    
+    res.json({
+      status: 'syncing',
+      message: 'Miner sync started in background',
+      timestamp: new Date(),
+    });
+
+    // Run sync asynchronously
+    syncMiners().catch(err => {
+      console.error('Background sync error:', err);
+    });
+  } catch (error) {
+    console.error('Sync trigger error:', error);
+    res.status(500).json({ error: 'Failed to trigger sync' });
+  }
+});
+
 module.exports = router;

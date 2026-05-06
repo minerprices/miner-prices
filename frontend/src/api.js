@@ -79,4 +79,6 @@ export const adminAPI = {
     api.get('/admin/sync-logs'),
   getStats: () =>
     api.get('/admin/stats'),
+  syncMiners: () =>
+    api.post('/admin/sync-miners'),
 };
