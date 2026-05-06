@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const minersRoutes = require('./routes/miners');
 const locationsRoutes = require('./routes/locations');
 const adminRoutes = require('./routes/admin');
+const initRoutes = require('./routes/init');
 const { syncMiners } = require('./jobs/syncMiners');
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Routes
+app.use('/init', initRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/miners', minersRoutes);
 app.use('/api/locations', locationsRoutes);
