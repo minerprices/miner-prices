@@ -114,18 +114,20 @@ const AdminImages = () => {
     const imageUrl = `/uploads/${filename}`;
     
     try {
-      // Update miner's image_url in backend
-      const res = await fetch(`${BACKEND_API}/api/miners/${selectedMiner.id}`, {
-        method: 'PATCH',
+      // Assign image to miner via POST
+      const res = await fetch(`${BACKEND_API}/api/miners/${selectedMiner.id}/image`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_url: imageUrl })
       });
 
-      if (res.ok) {
+      const data = await res.json();
+
+      if (res.ok && data.success) {
         setMessage(`✅ Image assigned to ${selectedMiner.name}`);
         loadMinerImages();
       } else {
-        setMessage('❌ Failed to assign image');
+        setMessage(`❌ ${data.error || 'Failed to assign image'}`);
       }
     } catch (err) {
       setMessage('❌ Error assigning image: ' + err.message);
@@ -153,17 +155,18 @@ const AdminImages = () => {
     if (!selectedMiner) return;
 
     try {
-      const res = await fetch(`${BACKEND_API}/api/miners/${selectedMiner.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: null })
+      const res = await fetch(`${BACKEND_API}/api/miners/${selectedMiner.id}/image/remove`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      if (res.ok) {
+      const data = await res.json();
+
+      if (res.ok && data.success) {
         setMessage('✅ Image removed from miner');
         loadMinerImages();
       } else {
-        setMessage('❌ Failed to remove image');
+        setMessage(`❌ ${data.error || 'Failed to remove image'}`);
       }
     } catch (err) {
       setMessage('❌ Error removing image');
