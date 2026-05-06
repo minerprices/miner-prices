@@ -38,14 +38,14 @@ router.post('/:vendorId', upload.single('logo'), async (req, res) => {
       return res.status(500).json({ error: 'ImgBB API key not configured' });
     }
 
-    // Upload to ImgBB
-    const formData = new FormData();
-    formData.append('image', req.file.buffer.toString('base64'));
-    formData.append('key', IMGBB_API_KEY);
-    formData.append('expiration', 0); // Permanent storage
+    // Upload to ImgBB with base64
+    const base64Image = req.file.buffer.toString('base64');
+    const params = new URLSearchParams();
+    params.append('image', base64Image);
+    params.append('key', IMGBB_API_KEY);
+    params.append('expiration', 0); // Permanent storage
 
-    const response = await axios.post(IMGBB_API_URL, formData, {
-      headers: formData.getHeaders(),
+    const response = await axios.post(IMGBB_API_URL, params, {
       timeout: 10000
     });
 

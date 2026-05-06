@@ -30,14 +30,13 @@ router.post('/', upload.single('image'), async (req, res) => {
       return res.status(500).json({ error: 'ImgBB API key not configured' });
     }
 
-    // Create FormData for ImgBB
-    const formData = new FormData();
-    formData.append('image', req.file.buffer.toString('base64'));
-    formData.append('key', IMGBB_API_KEY);
+    // Upload to ImgBB with base64
+    const base64Image = req.file.buffer.toString('base64');
+    const params = new URLSearchParams();
+    params.append('image', base64Image);
+    params.append('key', IMGBB_API_KEY);
 
-    // Upload to ImgBB
-    const response = await axios.post(IMGBB_API_URL, formData, {
-      headers: formData.getHeaders(),
+    const response = await axios.post(IMGBB_API_URL, params, {
       timeout: 10000
     });
 
