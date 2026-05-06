@@ -1,203 +1,129 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db/db');
-const { adminAuth } = require('../middleware/auth');
-const { sendApprovalNotificationEmail } = require('../utils/email');
+const { db } = require('../db/sqlite-init');
+const { syncWhattoMineMiners } = require('../services/whattomine');
+const { updateCoinPrices } = require('../services/coingecko');
 
-// Get pending vendors for approval
-router.get('/vendors/pending', adminAuth, async (req, res) => {
+// POST /api/admin/sync-whattomine - Sync miners from WhattoMine
+router.post('/sync-whattomine', async (req, res) => {
   try {
-    const result = await db.query(
-      `SELECT v.*, COUNT(l.id) as locations_count
-       FROM vendors v
-       LEFT JOIN locations l ON v.id = l.vendor_id
-       WHERE v.approved = false
-       GROUP BY v.id
-       ORDER BY v.created_at DESC`
-    );
-
-    res.json({
-      vendors: result.rows,
-      count: result.rows.length,
-    });
-  } catch (error) {
-    console.error('Get pending vendors error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get all vendors
-router.get('/vendors', adminAuth, async (req, res) => {
-  try {
-    const result = await db.query(
-      `SELECT v.*, COUNT(l.id) as locations_count
-       FROM vendors v
-       LEFT JOIN locations l ON v.id = l.vendor_id
-       GROUP BY v.id
-       ORDER BY v.created_at DESC`
-    );
-
-    res.json({
-      vendors: result.rows,
-      count: result.rows.length,
-    });
-  } catch (error) {
-    console.error('Get vendors error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Approve vendor
-router.post('/vendors/:vendorId/approve', adminAuth, async (req, res) => {
-  try {
-    const { vendorId } = req.params;
-    const { reason } = req.body;
-
-    const vendorResult = await db.query(
-      'SELECT email, company_name FROM vendors WHERE id = $1',
-      [vendorId]
-    );
-
-    if (vendorResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Vendor not found' });
-    }
-
-    const vendor = vendorResult.rows[0];
-
-    await db.query(
-      'UPDATE vendors SET approved = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
-      [vendorId]
-    );
-
-    await db.query(
-      `INSERT INTO approvals (vendor_id, admin_id, action, reason, status)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [vendorId, req.admin.id, 'approve', reason || '', 'approved']
-    );
-
-    // Send approval email
-    try {
-      await sendApprovalNotificationEmail(vendor.email, vendor.company_name, 'approved');
-    } catch (err) {
-      console.error('Failed to send approval email:', err);
-    }
-
-    res.json({
-      message: 'Vendor approved successfully',
-      vendor: vendor,
-    });
-  } catch (error) {
-    console.error('Approve vendor error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Reject vendor
-router.post('/vendors/:vendorId/reject', adminAuth, async (req, res) => {
-  try {
-    const { vendorId } = req.params;
-    const { reason } = req.body;
-
-    const vendorResult = await db.query(
-      'SELECT email, company_name FROM vendors WHERE id = $1',
-      [vendorId]
-    );
-
-    if (vendorResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Vendor not found' });
-    }
-
-    const vendor = vendorResult.rows[0];
-
-    await db.query(
-      'UPDATE vendors SET approved = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
-      [vendorId]
-    );
-
-    await db.query(
-      `INSERT INTO approvals (vendor_id, admin_id, action, reason, status)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [vendorId, req.admin.id, 'reject', reason || '', 'rejected']
-    );
-
-    // Send rejection email
-    try {
-      await sendApprovalNotificationEmail(vendor.email, vendor.company_name, 'rejected');
-    } catch (err) {
-      console.error('Failed to send rejection email:', err);
-    }
-
-    res.json({
-      message: 'Vendor rejected',
-      vendor: vendor,
-    });
-  } catch (error) {
-    console.error('Reject vendor error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get sync logs
-router.get('/sync-logs', adminAuth, async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT * FROM sync_log ORDER BY created_at DESC LIMIT 50'
-    );
-
-    res.json({
-      logs: result.rows,
-      count: result.rows.length,
-    });
-  } catch (error) {
-    console.error('Get sync logs error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get dashboard stats
-router.get('/stats', adminAuth, async (req, res) => {
-  try {
-    const vendorStats = await db.query(
-      'SELECT COUNT(*) as total, SUM(CASE WHEN approved = true THEN 1 ELSE 0 END) as approved FROM vendors'
-    );
-
-    const minerStats = await db.query(
-      'SELECT COUNT(*) as total, COUNT(DISTINCT algorithm) as algorithms FROM miners WHERE is_active = true'
-    );
-
-    const locationStats = await db.query(
-      'SELECT COUNT(*) as total FROM locations WHERE is_active = true'
-    );
-
-    res.json({
-      vendors: vendorStats.rows[0],
-      miners: minerStats.rows[0],
-      locations: locationStats.rows[0],
-    });
-  } catch (error) {
-    console.error('Get stats error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Manual trigger for miner sync
-router.post('/sync-miners', adminAuth, async (req, res) => {
-  try {
-    const { syncMiners } = require('../jobs/syncMiners');
+    const minersCount = await syncWhattoMineMiners(db);
     
-    res.json({
-      status: 'syncing',
-      message: 'Miner sync started in background',
-      timestamp: new Date(),
-    });
+    if (minersCount === 0) {
+      return res.status(500).json({ error: 'Sync failed' });
+    }
 
-    // Run sync asynchronously
-    syncMiners().catch(err => {
-      console.error('Background sync error:', err);
+    // Log the sync
+    db.prepare(`
+      INSERT INTO sync_log (miners_added, status)
+      VALUES (?, 'success')
+    `).run(minersCount);
+
+    res.json({
+      status: 'success',
+      miners_synced: minersCount,
+      message: `Synced ${minersCount} miners from WhattoMine`,
     });
   } catch (error) {
-    console.error('Sync trigger error:', error);
-    res.status(500).json({ error: 'Failed to trigger sync' });
+    console.error('Sync error:', error);
+    res.status(500).json({ error: 'Sync failed', details: error.message });
+  }
+});
+
+// POST /api/admin/sync-prices - Update coin prices from CoinGecko
+router.post('/sync-prices', async (req, res) => {
+  try {
+    const success = await updateCoinPrices(db);
+    
+    if (!success) {
+      return res.status(500).json({ error: 'Price sync failed' });
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Coin prices updated from CoinGecko',
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Price sync failed' });
+  }
+});
+
+// GET /api/admin/stats - Get platform stats
+router.get('/stats', (req, res) => {
+  try {
+    const minerCount = db.prepare('SELECT COUNT(*) as count FROM miners').get().count;
+    const coinCount = db.prepare('SELECT COUNT(*) as count FROM coins').get().count;
+    const vendorCount = db.prepare('SELECT COUNT(*) as count FROM vendors WHERE approved = 1').get().count;
+    const locationCount = db.prepare('SELECT COUNT(*) as count FROM locations WHERE is_active = 1').get().count;
+    const pendingVendors = db.prepare('SELECT COUNT(*) as count FROM vendors WHERE approved = 0').get().count;
+
+    res.json({
+      miners: minerCount,
+      coins: coinCount,
+      vendors: vendorCount,
+      locations: locationCount,
+      pending_vendors: pendingVendors,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get stats' });
+  }
+});
+
+// GET /api/admin/sync-logs - Get sync history
+router.get('/sync-logs', (req, res) => {
+  try {
+    const logs = db.prepare(`
+      SELECT * FROM sync_log
+      ORDER BY created_at DESC
+      LIMIT 20
+    `).all();
+
+    res.json({ sync_logs: logs });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get logs' });
+  }
+});
+
+// GET /api/admin/vendors/pending - Get pending vendor approvals
+router.get('/vendors/pending', (req, res) => {
+  try {
+    const vendors = db.prepare(`
+      SELECT id, company_name, email, created_at
+      FROM vendors
+      WHERE approved = 0
+      ORDER BY created_at DESC
+    `).all();
+
+    res.json({ pending_vendors: vendors });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get pending vendors' });
+  }
+});
+
+// POST /api/admin/vendors/:id/approve - Approve vendor
+router.post('/vendors/:id/approve', (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    db.prepare('UPDATE vendors SET approved = 1 WHERE id = ?').run(id);
+
+    res.json({ status: 'success', message: 'Vendor approved' });
+  } catch (error) {
+    res.status(500).json({ error: 'Approval failed' });
+  }
+});
+
+// POST /api/admin/vendors/:id/reject - Reject vendor
+router.post('/vendors/:id/reject', (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    db.prepare('DELETE FROM vendors WHERE id = ?').run(id);
+
+    res.json({ status: 'success', message: 'Vendor rejected' });
+  } catch (error) {
+    res.status(500).json({ error: 'Rejection failed' });
   }
 });
 
