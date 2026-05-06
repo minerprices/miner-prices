@@ -1,18 +1,17 @@
 const { Pool } = require('pg');
 require('dotenv').config({ override: true });
 
+// Use connection string if available (better for Supabase)
+const connectionString = process.env.DATABASE_URL || 
+  `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}?sslmode=require`;
+
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'miner_prices',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
+  connectionString,
   ssl: {
-    rejectUnauthorized: false,
-    minVersion: 'TLSv1.2'
+    rejectUnauthorized: false
   },
-  connectionTimeoutMillis: 10000,
-  statement_timeout: 10000,
+  connectionTimeoutMillis: 15000,
+  idleTimeoutMillis: 30000,
 });
 
 pool.on('error', (err) => {
