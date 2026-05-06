@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../db/sqlite-init');
 
-// Get all miners
+// Get all miners with images
 router.get('/', async (req, res) => {
   try {
     const { algorithm, search } = req.query;
@@ -24,9 +24,25 @@ router.get('/', async (req, res) => {
 
     const miners = db.prepare(query).all(...params);
 
+    // Fetch images for each miner
+    const minersWithImages = miners.map(miner => {
+      const images = db.prepare(`
+        SELECT id, url, is_primary
+        FROM miner_images
+        WHERE miner_id = ?
+        ORDER BY is_primary DESC
+      `).all(miner.id);
+
+      return {
+        ...miner,
+        images: images || [],
+        primary_image: images?.find(img => img.is_primary === 1)?.url || null
+      };
+    });
+
     res.json({
-      miners: miners || [],
-      count: miners?.length || 0
+      miners: minersWithImages,
+      count: minersWithImages?.length || 0
     });
   } catch (error) {
     console.error('Miners error:', error);

@@ -35,6 +35,7 @@ const Navigation = ({ isLoggedIn, onLogout }) => {
             <>
               <li><Link to="/vendor/dashboard">Dashboard</Link></li>
               <li><Link to="/admin/sync">🔄 Sync</Link></li>
+              <li><Link to="/admin/images">📸 Images</Link></li>
               <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
             </>
           )}

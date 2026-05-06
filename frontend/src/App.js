@@ -19,6 +19,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSync from './pages/AdminSync';
 import MinerDetailEnhanced from './pages/MinerDetailEnhanced';
+import AdminImageManager from './pages/AdminImageManager';
 import Navigation from './components/Navigation';
 
 function App() {
@@ -64,6 +65,10 @@ function App() {
         <Route 
           path="/admin/sync" 
           element={token ? <AdminSync /> : <Navigate to="/admin/login" />} 
+        />
+        <Route 
+          path="/admin/images" 
+          element={token ? <AdminImageManager /> : <Navigate to="/admin/login" />} 
         />
       </Routes>
     </Router>

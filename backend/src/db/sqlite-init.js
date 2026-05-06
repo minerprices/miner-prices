@@ -85,6 +85,15 @@ function initializeDB() {
       FOREIGN KEY(miner_id) REFERENCES miners(id),
       FOREIGN KEY(coin_id) REFERENCES coins(id)
     );
+
+    CREATE TABLE IF NOT EXISTS miner_images (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      miner_id INTEGER NOT NULL,
+      url TEXT NOT NULL,
+      is_primary INTEGER DEFAULT 0,
+      uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(miner_id) REFERENCES miners(id)
+    );
   `);
 
   // Check if miners exist
