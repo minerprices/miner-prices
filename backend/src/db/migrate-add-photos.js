@@ -18,7 +18,7 @@ function migrateAddPhotos() {
     if (!hasImageUrl) {
       console.log('🔄 Migrating: Adding photo columns to miners table...');
 
-      // Add missing columns
+      // Add missing columns (without CURRENT_TIMESTAMP default to avoid SQLite error)
       db.exec(`
         ALTER TABLE miners ADD COLUMN image_url TEXT;
         ALTER TABLE miners ADD COLUMN manufacturer TEXT;
@@ -27,7 +27,7 @@ function migrateAddPhotos() {
         ALTER TABLE miners ADD COLUMN tutorial_pdf_url TEXT;
         ALTER TABLE miners ADD COLUMN firmware_url TEXT;
         ALTER TABLE miners ADD COLUMN apps TEXT;
-        ALTER TABLE miners ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+        ALTER TABLE miners ADD COLUMN updated_at DATETIME;
       `);
 
       console.log('✅ Migration complete: Photo columns added');
