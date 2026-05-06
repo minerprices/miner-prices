@@ -129,6 +129,40 @@
   color: #212529;
 }
 
+/* Upload Tabs */
+.upload-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.upload-tab {
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.upload-tab:hover {
+  color: #007bff;
+}
+
+.upload-tab.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.upload-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .upload-input {
   display: block;
   cursor: pointer;
@@ -165,6 +199,100 @@
   font-size: 12px;
   color: #6c757d;
   font-style: italic;
+}
+
+/* Search Results */
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.results-info {
+  margin: 0;
+  padding: 10px 12px;
+  background: #e7f0ff;
+  color: #0056b3;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.result-item:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+.result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.result-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #212529;
+}
+
+.result-url {
+  font-size: 11px;
+  color: #6c757d;
+  font-family: monospace;
+}
+
+.btn-download {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  margin-left: 10px;
+}
+
+.btn-download:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-download:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.enhancement-note {
+  margin: 10px 0 0 0;
+  padding: 10px 12px;
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* Images Section */
