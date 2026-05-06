@@ -11,8 +11,7 @@ function initializeDB() {
   // Run migrations first
   migrateAddPhotos();
   
-  seedComprehensiveData(db);
-  // Create tables
+  // Create tables FIRST
   db.exec(`
     CREATE TABLE IF NOT EXISTS miners (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -95,6 +94,9 @@ function initializeDB() {
       FOREIGN KEY(miner_id) REFERENCES miners(id)
     );
   `);
+
+  // NOW run seed/initialization after tables exist
+  seedComprehensiveData(db);
 
   // Check if miners exist
   const minerCount = db.prepare('SELECT COUNT(*) as count FROM miners').get().count;

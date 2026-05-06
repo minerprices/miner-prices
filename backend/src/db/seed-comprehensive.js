@@ -3,9 +3,7 @@
  * Includes: Miners, Coins, Vendors, Locations, and Profitability calculations
  */
 
-const { db } = require('./sqlite-init');
-
-function seedComprehensiveData() {
+function seedComprehensiveData(db) {
   console.log('📊 Seeding comprehensive mining data...');
 
   // ============ COINS - Real market data ============

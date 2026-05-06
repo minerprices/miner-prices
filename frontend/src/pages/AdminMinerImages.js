@@ -2,13 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './AdminMinerImages.css';
 
 const AdminMinerImages = () => {
-  const [miners, setMiners] = useState([]);
-  const [selectedMiner, setSelectedMiner] = useState(null);
-  const [minerImages, setMinerImages] = useState([]);
+  const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [searching, setSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -16,40 +11,20 @@ const AdminMinerImages = () => {
   const API = 'https://miner-prices-upload.onrender.com';
 
   useEffect(() => {
-    loadMiners();
+    loadImages();
   }, []);
 
-  useEffect(() => {
-    if (selectedMiner) {
-      loadMinerImages();
-    }
-  }, [selectedMiner]);
-
-  const loadMiners = async () => {
-    try {
-      // Get miners from main server
-      const res = await fetch('https://miner-prices.onrender.com/api/miners');
-      const data = await res.json();
-      setMiners(data.miners || []);
-      if (data.miners && data.miners.length > 0) {
-        setSelectedMiner(data.miners[0]);
-      }
-    } catch (err) {
-      console.error('Error loading miners:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadMinerImages = async () => {
+  const loadImages = async () => {
     try {
       // Get images from upload server
-      const res = await fetch(`${API}/api/miners/${selectedMiner.id}/images`);
+      const res = await fetch(`${API}/api/list`);
       const data = await res.json();
-      setMinerImages(data.images || []);
+      setImages(data.files || []);
     } catch (err) {
       console.error('Error loading images:', err);
-      setMinerImages([]);
+      setImages([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,7 +39,7 @@ const AdminMinerImages = () => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const res = await fetch(`${API}/api/miners/${selectedMiner.id}/images/upload`, {
+      const res = await fetch(`${API}/api/upload`, {
         method: 'POST',
         body: formData
       });
@@ -73,7 +48,7 @@ const AdminMinerImages = () => {
 
       if (res.ok) {
         setMessage('✅ Image uploaded!');
-        loadMinerImages();
+        loadImages();
       } else {
         setMessage('❌ ' + (data.error || 'Upload failed'));
       }
@@ -85,116 +60,21 @@ const AdminMinerImages = () => {
     }
   };
 
-  const searchImages = async () => {
-    if (!searchTerm.trim()) {
-      setMessage('Enter search term');
-      return;
-    }
-
-    setSearching(true);
-    setMessage('Searching...');
+  const deleteImage = async (filename) => {
+    if (!window.confirm(`Delete ${filename}?`)) return;
 
     try {
-      // Search using Google Images API alternative
-      const query = encodeURIComponent(`${selectedMiner.name} ${searchTerm} ASIC miner`);
-      
-      // Using DuckDuckGo image search as fallback
-      const results = [
-        {
-          title: `${selectedMiner.name} - Result 1`,
-          url: `https://via.placeholder.com/400x300/667eea/ffffff?text=${encodeURIComponent(selectedMiner.name + ' 1')}`
-        },
-        {
-          title: `${selectedMiner.name} - Result 2`,
-          url: `https://via.placeholder.com/400x300/764ba2/ffffff?text=${encodeURIComponent(selectedMiner.name + ' 2')}`
-        },
-        {
-          title: `${selectedMiner.name} - Result 3`,
-          url: `https://via.placeholder.com/400x300/f093fb/ffffff?text=${encodeURIComponent(selectedMiner.name + ' 3')}`
-        },
-        {
-          title: `${selectedMiner.name} - Result 4`,
-          url: `https://via.placeholder.com/400x300/4facfe/ffffff?text=${encodeURIComponent(selectedMiner.name + ' 4')}`
-        },
-        {
-          title: `${selectedMiner.name} - Result 5`,
-          url: `https://via.placeholder.com/400x300/00f2fe/ffffff?text=${encodeURIComponent(selectedMiner.name + ' 5')}`
-        }
-      ];
-
-      setSearchResults(results);
-      setMessage('✅ Found 5 images - click to use');
-    } catch (err) {
-      setMessage('❌ Search failed');
-      console.error('Error:', err);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const useImage = async (imageUrl) => {
-    setUploading(true);
-    setMessage('Adding image...');
-
-    try {
-      // Download and save the image
-      const res = await fetch(`${API}/api/miners/${selectedMiner.id}/images/add-url`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: imageUrl })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setMessage('✅ Image added!');
-        setSearchResults([]);
-        setSearchTerm('');
-        loadMinerImages();
-      } else {
-        setMessage('❌ ' + (data.error || 'Failed to add image'));
-      }
-    } catch (err) {
-      setMessage('❌ Error adding image');
-      console.error('Error:', err);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const setPrimary = async (imageId) => {
-    try {
-      const res = await fetch(`${API}/api/miners/${selectedMiner.id}/images/${imageId}/primary`, {
-        method: 'POST'
-      });
-
-      if (res.ok) {
-        setMessage('✅ Primary image updated');
-        loadMinerImages();
-      } else {
-        setMessage('❌ Error updating');
-      }
-    } catch (err) {
-      setMessage('❌ Error updating');
-    }
-  };
-
-  const deleteImage = async (imageId) => {
-    if (!window.confirm('Delete image?')) return;
-
-    try {
-      const res = await fetch(`${API}/api/miners/${selectedMiner.id}/images/${imageId}`, {
-        method: 'DELETE'
-      });
+      const res = await fetch(`${API}/api/delete?filename=${encodeURIComponent(filename)}`);
 
       if (res.ok) {
         setMessage('✅ Image deleted');
-        loadMinerImages();
+        loadImages();
       } else {
         setMessage('❌ Delete failed');
       }
     } catch (err) {
       setMessage('❌ Error deleting');
+      console.error('Error:', err);
     }
   };
 
@@ -202,141 +82,58 @@ const AdminMinerImages = () => {
 
   return (
     <div className="admin-miner-images">
-      <h1>🖼️ Manage Miner Images</h1>
+      <h1>🖼️ Image Gallery</h1>
 
       <div className="admin-container">
-        {/* Miners List */}
-        <div className="miners-list">
-          <h2>Miners</h2>
-          <div className="miners-select">
-            {miners.map((miner) => (
-              <button
-                key={miner.id}
-                className={`miner-btn ${selectedMiner?.id === miner.id ? 'active' : ''}`}
-                onClick={() => setSelectedMiner(miner)}
-              >
-                {miner.name}
-              </button>
-            ))}
-          </div>
+        {message && (
+          <p className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
+            {message}
+          </p>
+        )}
+
+        <div className="upload-section">
+          <label className="upload-label">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleUpload}
+              disabled={uploading}
+            />
+            <span className="upload-btn">
+              {uploading ? '⏳ Uploading...' : '📤 Upload Image'}
+            </span>
+          </label>
         </div>
 
-        {/* Image Management */}
-        {selectedMiner && (
-          <div className="image-management">
-            <h2>Images for {selectedMiner.name}</h2>
-
-            {message && (
-              <p className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
-                {message}
-              </p>
-            )}
-
-            {/* Tabs */}
-            <div className="tabs">
-              <input type="radio" name="tab" id="tab1" defaultChecked />
-              <label htmlFor="tab1">📤 Upload</label>
-              <input type="radio" name="tab" id="tab2" />
-              <label htmlFor="tab2">🔍 Find Images</label>
-
-              {/* Upload Tab */}
-              <div className="tab-content">
-                <div className="upload-section">
-                  <label className="upload-label">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleUpload}
-                      disabled={uploading}
+        <div className="gallery">
+          <h2>Gallery ({images.length} images)</h2>
+          {images.length === 0 ? (
+            <p className="no-images">No images yet. Upload one to get started!</p>
+          ) : (
+            <div className="images-grid">
+              {images.map((filename) => (
+                <div key={filename} className="image-card">
+                  <div className="image-wrapper">
+                    <img 
+                      src={`${API}/uploads/${encodeURIComponent(filename)}`} 
+                      alt={filename}
+                      onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22150%22 height=%22150%22/%3E%3Ctext x=%2275%22 y=%2275%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'"
                     />
-                    <span className="upload-btn">
-                      {uploading ? '⏳ Uploading...' : '📤 Choose Image'}
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Search Tab */}
-              <div className="tab-content">
-                <div className="search-section">
-                  <div className="search-box">
-                    <input
-                      type="text"
-                      placeholder={`Search for ${selectedMiner.name} images...`}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && searchImages()}
-                    />
-                    <button
-                      onClick={searchImages}
-                      disabled={searching}
-                      className="search-btn"
-                    >
-                      {searching ? '🔍 Searching...' : '🔍 Search'}
-                    </button>
                   </div>
-
-                  {searchResults.length > 0 && (
-                    <div className="search-results">
-                      <p className="results-info">Found {searchResults.length} images</p>
-                      <div className="results-grid">
-                        {searchResults.map((result, idx) => (
-                          <div key={idx} className="result-item">
-                            <img src={result.url} alt={result.title} />
-                            <button
-                              onClick={() => useImage(result.url)}
-                              disabled={uploading}
-                              className="use-btn"
-                            >
-                              {uploading ? '⏳' : '✓ Use'}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="image-info">
+                    <p className="filename">{filename}</p>
+                  </div>
+                  <button
+                    className="delete-btn"
+                    onClick={() => deleteImage(filename)}
+                  >
+                    Delete
+                  </button>
                 </div>
-              </div>
+              ))}
             </div>
-
-            {/* Current Images */}
-            <div className="current-images">
-              <h3>Current Images ({minerImages.length})</h3>
-              {minerImages.length === 0 ? (
-                <p className="no-images">No images yet. Upload or search to add.</p>
-              ) : (
-                <div className="images-grid">
-                  {minerImages.map((img) => (
-                    <div key={img.id} className="image-card">
-                      <div className="image-wrapper">
-                        <img src={img.url} alt={`Miner ${img.id}`} />
-                        {img.is_primary === 1 && (
-                          <span className="primary-badge">⭐ Primary</span>
-                        )}
-                      </div>
-                      <div className="image-actions">
-                        {img.is_primary === 0 && (
-                          <button
-                            className="action-btn primary-btn"
-                            onClick={() => setPrimary(img.id)}
-                          >
-                            Set Primary
-                          </button>
-                        )}
-                        <button
-                          className="action-btn delete-btn"
-                          onClick={() => deleteImage(img.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
