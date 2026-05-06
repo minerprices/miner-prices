@@ -17,6 +17,7 @@ import VendorRegister from './pages/VendorRegister';
 import VendorDashboard from './pages/VendorDashboard';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminSync from './pages/AdminSync';
 import Navigation from './components/Navigation';
 
 function App() {
@@ -57,6 +58,10 @@ function App() {
         <Route 
           path="/admin/dashboard" 
           element={token ? <AdminDashboard onLogout={handleLogout} /> : <Navigate to="/admin/login" />} 
+        />
+        <Route 
+          path="/admin/sync" 
+          element={token ? <AdminSync /> : <Navigate to="/admin/login" />} 
         />
       </Routes>
     </Router>

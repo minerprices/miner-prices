@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { db } = require('../db/sqlite-init');
+const { getMetadata, getAllMetadata } = require('../db/oneminers-metadata');
 
 const WHATTOMINE_API = 'https://whattomine.com/api/v1';
 
@@ -92,6 +93,28 @@ function detectCoolingType(name) {
 }
 
 /**
+ * Enrich miner with OneMiriers metadata
+ */
+function enrichMinerWithMetadata(miner) {
+  const metadata = getMetadata(miner.name);
+  
+  if (!metadata) {
+    return miner;
+  }
+
+  return {
+    ...miner,
+    image_url: metadata.image_urls?.[0] || null,
+    manufacturer: metadata.manufacturer,
+    cooling_type: metadata.cooling_type,
+    tutorial_video_id: metadata.tutorial_video?.youtube_id || null,
+    tutorial_pdf_url: metadata.tutorial_pdf_url || null,
+    firmware_url: metadata.firmware_url || null,
+    apps: metadata.apps ? JSON.stringify(metadata.apps) : null,
+  };
+}
+
+/**
  * Sync ASICs to database with metadata
  */
 async function syncASICsToDatabase(db) {
@@ -108,26 +131,46 @@ async function syncASICsToDatabase(db) {
 
     const insertMiner = db.prepare(`
       INSERT OR IGNORE INTO miners 
-      (whattomine_id, name, algorithm, power_consumption, specs, is_active)
-      VALUES (?, ?, ?, ?, ?, 1)
+      (whattomine_id, name, algorithm, power_consumption, specs, 
+       manufacturer, cooling_type, image_url, tutorial_video_id, 
+       tutorial_pdf_url, firmware_url, apps, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
     `);
 
     const insertAll = db.transaction(() => {
       asics.forEach(asic => {
         const mainAlgo = asic.algorithms[0] || {};
         
+        // Enrich with OneMiriers metadata
+        const enriched = enrichMinerWithMetadata({
+          whattomine_id: asic.whattomine_id,
+          name: asic.name,
+          algorithm: mainAlgo.name || 'Unknown',
+          power_consumption: mainAlgo.power || 0,
+          specs: asic.specs,
+          manufacturer: asic.manufacturer,
+          cooling_type: asic.cooling_type,
+        });
+        
         insertMiner.run(
-          asic.whattomine_id,
-          asic.name,
-          mainAlgo.name || 'Unknown',
-          mainAlgo.power || 0,
-          asic.specs
+          enriched.whattomine_id,
+          enriched.name,
+          enriched.algorithm,
+          enriched.power_consumption,
+          enriched.specs,
+          enriched.manufacturer,
+          enriched.cooling_type,
+          enriched.image_url,
+          enriched.tutorial_video_id,
+          enriched.tutorial_pdf_url,
+          enriched.firmware_url,
+          enriched.apps
         );
       });
     });
 
     insertAll();
-    console.log(`✅ Synced ${asics.length} ASIC miners to database`);
+    console.log(`✅ Synced ${asics.length} ASIC miners with OneMiriers metadata`);
     
     // Log sync
     db.prepare(`
