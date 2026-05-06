@@ -50,6 +50,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Serve uploaded images
+const uploadDir = process.env.NODE_ENV === 'production' 
+  ? '/var/data/uploads' 
+  : path.join(__dirname, '../data/uploads');
+app.use('/uploads', express.static(uploadDir));
+
 // Upload endpoints for miner images - SAVE TO FILES
 app.post('/api/miners/:minerId/images/upload', upload.single('image'), (req, res) => {
   try {

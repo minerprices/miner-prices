@@ -6,7 +6,12 @@ const fs = require('fs');
 const { db } = require('../db/sqlite-init');
 
 // Setup persistent upload directory
-const uploadDir = path.join(__dirname, '../../data/uploads');
+// On Render, this will be mounted to /var/data/uploads (persistent disk)
+// Locally, use ./data/uploads
+const uploadDir = process.env.NODE_ENV === 'production' 
+  ? '/var/data/uploads' 
+  : path.join(__dirname, '../../data/uploads');
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }

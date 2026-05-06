@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: miner-prices-backend
+    runtime: node
+    plan: standard
+    buildCommand: "cd backend && npm install"
+    startCommand: "cd backend && npm start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: minerprices-db
+          property: connectionString
+    disk:
+      name: miner-images
+      mountPath: /var/data/uploads
+      sizeGB: 5
+    routes:
+      - path: /
+        priority: 100
+
+  - type: web
+    name: miner-prices-frontend
+    runtime: static
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublicPath: frontend/build
+    routes:
+      - path: /
+        priority: 100
+
+databases:
+  - name: minerprices-db
+    databaseName: minerprices
+    user: minerprices
+    plan: free
