@@ -1,6 +1,6 @@
 {
   "name": "miner-prices-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Miner Prices Platform - Node.js/Express Backend",
   "main": "src/index.js",
   "scripts": {
