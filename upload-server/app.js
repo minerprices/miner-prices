@@ -123,7 +123,7 @@ const server = http.createServer((req, res) => {
     
     <div class="gallery">
       <h2>Gallery</h2>
-      <div id="gallery" class="images"><p class="loading">Loading images...</p></div>
+      <div id="gallery" class="images"></div>
       <div class="stats" id="stats"></div>
     </div>
   </div>
@@ -184,9 +184,11 @@ const server = http.createServer((req, res) => {
         
         const gallery = document.getElementById('gallery');
         
-        if (!data.files || data.files.length === 0) {
+        if (!data || !data.files || data.files.length === 0) {
           gallery.innerHTML = '<div class="empty">No images yet. Upload one!</div>';
-          document.getElementById('stats').innerText = '0 images';
+          if (document.getElementById('stats')) {
+            document.getElementById('stats').innerText = '0 images';
+          }
           return;
         }
 
@@ -210,7 +212,11 @@ const server = http.createServer((req, res) => {
       el.className = 'message ' + type;
     }
 
+    // Initialize gallery immediately
+    document.getElementById('gallery').innerHTML = '<div class="empty">Loading...</div>';
+    
     // Load gallery on start
+    window.addEventListener('DOMContentLoaded', loadGallery);
     loadGallery();
   </script>
 </body>
