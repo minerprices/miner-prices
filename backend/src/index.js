@@ -48,7 +48,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Upload endpoints for miner images
+// Upload endpoints for miner images - SAVE TO FILES
 app.post('/api/miners/:minerId/images/upload', upload.single('image'), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file' });
@@ -59,6 +59,8 @@ app.post('/api/miners/:minerId/images/upload', upload.single('image'), (req, res
     const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(minerId);
     if (!miner) return res.status(404).json({ error: 'Miner not found' });
     
+    // File is already saved by multer to uploadDir
+    // req.file.filename is the saved filename
     const imageUrl = `/images/${req.file.filename}`;
     
     // Check if first image
@@ -68,8 +70,11 @@ app.post('/api/miners/:minerId/images/upload', upload.single('image'), (req, res
     // Save to database
     db.prepare('INSERT INTO miner_images (miner_id, url, is_primary) VALUES (?, ?, ?)').run(minerId, imageUrl, isPrimary);
     
+    console.log(`✅ Image uploaded for miner ${minerId}: ${imageUrl}`);
+    
     res.json({ success: true, url: imageUrl, filename: req.file.filename });
   } catch (err) {
+    console.error('Upload error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -133,8 +138,8 @@ app.post('/api/miners/:minerId/images/:imageId/primary', (req, res) => {
   }
 });
 
-// Add image by URL
-app.post('/api/miners/:minerId/images/add-url', (req, res) => {
+// Add image by URL - DOWNLOAD AND SAVE TO FILES
+app.post('/api/miners/:minerId/images/add-url', async (req, res) => {
   try {
     const { minerId } = req.params;
     const { url } = req.body;
@@ -145,16 +150,48 @@ app.post('/api/miners/:minerId/images/add-url', (req, res) => {
     const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(minerId);
     if (!miner) return res.status(404).json({ error: 'Miner not found' });
 
+    // Download image from URL
+    const https = require('https');
+    const http = require('http');
+    const fs = require('fs');
+    
+    const downloadImage = (imageUrl) => {
+      return new Promise((resolve, reject) => {
+        const proto = imageUrl.startsWith('https') ? https : http;
+        const filename = Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '.jpg';
+        const filepath = path.join(uploadDir, filename);
+        
+        const file = fs.createWriteStream(filepath);
+        
+        proto.get(imageUrl, { timeout: 5000 }, (response) => {
+          response.pipe(file);
+          file.on('finish', () => {
+            file.close();
+            resolve({ filename, url: `/images/${filename}` });
+          });
+        }).on('error', (err) => {
+          fs.unlink(filepath, () => {});
+          reject(err);
+        });
+      });
+    };
+
+    // Download and save
+    const result = await downloadImage(url);
+    
     // Check if first image
     const existingCount = db.prepare('SELECT COUNT(*) as count FROM miner_images WHERE miner_id = ?').get(minerId).count;
     const isPrimary = existingCount === 0 ? 1 : 0;
 
     // Save to database
-    db.prepare('INSERT INTO miner_images (miner_id, url, is_primary) VALUES (?, ?, ?)').run(minerId, url, isPrimary);
+    db.prepare('INSERT INTO miner_images (miner_id, url, is_primary) VALUES (?, ?, ?)').run(minerId, result.url, isPrimary);
 
-    res.json({ success: true, url: url });
+    console.log(`✅ Image from URL saved for miner ${minerId}: ${result.url}`);
+
+    res.json({ success: true, url: result.url, filename: result.filename });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Download error:', err);
+    res.status(500).json({ error: 'Failed to download image: ' + err.message });
   }
 });
 
