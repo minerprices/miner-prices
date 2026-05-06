@@ -9,12 +9,10 @@ const AdminImages = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const UPLOAD_SERVER = 'https://miner-prices-upload.onrender.com';
   const BACKEND = 'https://miner-prices.onrender.com';
 
   useEffect(() => {
     loadMiners();
-    loadAvailableImages();
   }, []);
 
   const loadMiners = async () => {
@@ -30,19 +28,11 @@ const AdminImages = () => {
     }
   };
 
-  const loadAvailableImages = async () => {
-    try {
-      const res = await fetch(`${UPLOAD_SERVER}/api/list`);
-      const data = await res.json();
-      setAvailableImages(data.files || []);
-    } catch (err) {
-      console.error('Error:', err);
-    }
-  };
+
 
   const uploadImage = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !selectedMiner) return;
 
     setUploading(true);
     setMessage('Uploading...');
@@ -51,7 +41,7 @@ const AdminImages = () => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const res = await fetch(`${UPLOAD_SERVER}/api/upload`, {
+      const res = await fetch(`${BACKEND}/api/miners/${selectedMiner.id}/upload-image`, {
         method: 'POST',
         body: formData
       });
@@ -59,9 +49,9 @@ const AdminImages = () => {
       const data = await res.json();
       if (data.success) {
         setMessage('✅ Image uploaded!');
-        loadAvailableImages();
+        loadMiners();
       } else {
-        setMessage('❌ Upload failed');
+        setMessage(`❌ ${data.error || 'Upload failed'}`);
       }
     } catch (err) {
       setMessage('❌ Error: ' + err.message);
@@ -71,37 +61,7 @@ const AdminImages = () => {
     }
   };
 
-  const assignImageToMiner = async (filename) => {
-    if (!selectedMiner) {
-      setMessage('❌ Select a miner first');
-      return;
-    }
 
-    try {
-      const imageUrl = `${UPLOAD_SERVER}/uploads/${encodeURIComponent(filename)}`;
-      
-      const res = await fetch(`${BACKEND}/api/miners/${selectedMiner.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: imageUrl })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setMessage(`✅ Assigned to ${selectedMiner.name}`);
-        // Update local miner object
-        const updated = miners.map(m => 
-          m.id === selectedMiner.id ? { ...m, image_url: imageUrl } : m
-        );
-        setMiners(updated);
-        setSelectedMiner({ ...selectedMiner, image_url: imageUrl });
-      } else {
-        setMessage(`❌ ${data.error}`);
-      }
-    } catch (err) {
-      setMessage('❌ Error: ' + err.message);
-    }
-  };
 
   const removeImage = async () => {
     if (!selectedMiner) return;
@@ -127,21 +87,7 @@ const AdminImages = () => {
     }
   };
 
-  const deleteImage = async (filename) => {
-    if (!window.confirm(`Delete ${filename}?`)) return;
 
-    try {
-      const res = await fetch(`${UPLOAD_SERVER}/api/delete?filename=${encodeURIComponent(filename)}`);
-      if (res.ok) {
-        setMessage('✅ Deleted');
-        loadAvailableImages();
-      } else {
-        setMessage('❌ Delete failed');
-      }
-    } catch (err) {
-      setMessage('❌ Error: ' + err.message);
-    }
-  };
 
   if (loading) {
     return <div className="admin-images"><div className="container"><p>Loading...</p></div></div>;
@@ -207,27 +153,7 @@ const AdminImages = () => {
                   </label>
                 </div>
 
-                {/* Available Images */}
-                <h3>Available Images ({availableImages.length})</h3>
-                <div className="images-grid">
-                  {availableImages.map((filename) => (
-                    <div key={filename} className="image-card">
-                      <img
-                        src={`${UPLOAD_SERVER}/uploads/${encodeURIComponent(filename)}`}
-                        alt={filename}
-                        onError={(e) => { e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23ccc%22 width=%22150%22 height=%22150%22/%3E%3C/svg%3E'; }}
-                      />
-                      <div className="actions">
-                        <button className="assign-btn" onClick={() => assignImageToMiner(filename)}>
-                          Assign
-                        </button>
-                        <button className="delete-btn" onClick={() => deleteImage(filename)}>
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+
               </>
             )}
           </div>
