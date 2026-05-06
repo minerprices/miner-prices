@@ -5,7 +5,11 @@ const TestUpload = () => {
   const [images, setImages] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const API = 'https://miner-prices.onrender.com';
+  
+  // Auto-detect API URL
+  const API = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5555'
+    : 'https://miner-prices.onrender.com';
 
   useEffect(() => {
     loadImages();
