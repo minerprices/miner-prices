@@ -1,25 +1,25 @@
 #!/usr/bin/env node
 
-/**
- * MINER PRICES - IMAGE UPLOAD SERVER
- * Deployed on Render
- * 
- * Standalone image upload service
- */
-
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const url = require('url');
 const querystring = require('querystring');
+const crypto = require('crypto');
 
 const PORT = process.env.PORT || 5555;
-const UPLOAD_DIR = path.join(process.env.HOME || '/tmp', 'miner-uploads');
+
+// Use /tmp for uploads (Render's persistent storage alternative: use env var)
+// For persistent storage, we'll store image URLs/data in memory with a fallback
+const UPLOAD_DIR = path.join(process.env.TMPDIR || '/tmp', 'uploads');
 
 // Create uploads directory
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
+
+// In-memory storage for images (fallback when filesystem resets)
+let imagesInMemory = [];
 
 // Parse multipart form data
 function parseMultipartForm(req, callback) {
@@ -29,7 +29,7 @@ function parseMultipartForm(req, callback) {
     return;
   }
   
-  const boundary = contentType.split('boundary=')[1];
+  const boundary = contentType.split('boundary=')[1].split(';')[0];
   
   let body = '';
   req.on('data', chunk => body += chunk.toString('binary'));
@@ -45,7 +45,16 @@ function parseMultipartForm(req, callback) {
     const filenameMatch = filePart.match(/filename="([^"]+)"/);
     const filename = filenameMatch ? filenameMatch[1] : 'upload';
     
-    const fileData = filePart.split('\r\n\r\n')[1].split('\r\n--')[0];
+    // Extract file data
+    const headerEnd = filePart.indexOf('\r\n\r\n');
+    if (headerEnd === -1) {
+      callback(null);
+      return;
+    }
+    
+    const fileStart = headerEnd + 4;
+    const fileEnd = filePart.lastIndexOf('\r\n');
+    const fileData = filePart.substring(fileStart, fileEnd);
     
     callback({
       filename: filename,
@@ -84,27 +93,25 @@ const server = http.createServer((req, res) => {
   <title>⛏️ Miner Prices - Image Upload</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; padding: 20px; }
-    .container { max-width: 700px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
     h1 { color: #333; margin-bottom: 10px; font-size: 32px; }
     .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
     .upload-box { margin-bottom: 40px; }
     input[type="file"] { padding: 12px; border: 2px solid #ddd; border-radius: 6px; width: 100%; margin-bottom: 12px; font-size: 14px; }
-    button { padding: 14px 28px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px; width: 100%; transition: all 0.2s; }
-    button:hover { background: #0056b3; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,123,255,0.3); }
-    button:active { transform: translateY(0); }
+    button { padding: 14px 28px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px; width: 100%; transition: all 0.2s; }
+    button:hover { background: #5568d3; }
+    button:active { transform: scale(0.98); }
     .message { padding: 14px; margin-bottom: 20px; border-radius: 6px; display: none; font-weight: 600; font-size: 14px; }
-    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block; }
-    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block; }
+    .success { background: #d4edda; color: #155724; display: block; }
+    .error { background: #f8d7da; color: #721c24; display: block; }
     .gallery { margin-top: 50px; border-top: 2px solid #f0f0f0; padding-top: 30px; }
     h2 { color: #333; margin-bottom: 20px; font-size: 20px; }
-    .images { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
-    .image-item { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: #f9f9f9; transition: all 0.2s; }
-    .image-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .image-item img { width: 100%; height: 130px; object-fit: cover; display: block; }
-    .delete-btn { padding: 10px; background: #dc3545; color: white; border: none; cursor: pointer; width: 100%; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+    .images { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+    .image-item { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: #f9f9f9; }
+    .image-item img { width: 100%; height: 150px; object-fit: cover; display: block; }
+    .delete-btn { padding: 10px; background: #dc3545; color: white; border: none; cursor: pointer; width: 100%; font-size: 12px; font-weight: 600; }
     .delete-btn:hover { background: #c82333; }
-    .loading { color: #666; font-size: 14px; padding: 20px; text-align: center; }
     .empty { color: #999; font-size: 14px; padding: 30px; text-align: center; background: #f9f9f9; border-radius: 6px; }
     .stats { color: #666; font-size: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #f0f0f0; }
   </style>
@@ -134,7 +141,7 @@ const server = http.createServer((req, res) => {
       const file = fileInput.files[0];
       
       if (!file) {
-        alert('Choose a file first');
+        showMessage('Choose a file first', 'error');
         return;
       }
 
@@ -146,11 +153,11 @@ const server = http.createServer((req, res) => {
       try {
         const res = await fetch('/api/upload', { 
           method: 'POST', 
-          body: formData 
+          body: formData
         });
         
         if (!res.ok) {
-          throw new Error('Server error: ' + res.status);
+          throw new Error('Upload failed: ' + res.status);
         }
         
         const data = await res.json();
@@ -158,7 +165,7 @@ const server = http.createServer((req, res) => {
         if (data.success) {
           showMessage('✅ Uploaded: ' + data.filename, 'success');
           fileInput.value = '';
-          setTimeout(() => loadGallery(), 1000);
+          loadGallery();
         } else {
           showMessage('❌ ' + (data.error || 'Upload failed'), 'error');
         }
@@ -173,47 +180,38 @@ const server = http.createServer((req, res) => {
       
       try {
         const res = await fetch('/api/delete?filename=' + encodeURIComponent(filename));
-        const data = await res.json();
-        if (data.success) {
+        if (res.ok) {
           showMessage('✅ Deleted', 'success');
           loadGallery();
-        } else {
-          showMessage('❌ Delete failed', 'error');
         }
       } catch (err) {
-        showMessage('❌ Error', 'error');
+        showMessage('❌ Delete error', 'error');
       }
     }
 
     async function loadGallery() {
       try {
         const res = await fetch('/api/list');
-        if (!res.ok) {
-          throw new Error('API error: ' + res.status);
-        }
         const data = await res.json();
         
         const gallery = document.getElementById('gallery');
         
-        if (!data || !data.files || data.files.length === 0) {
-          gallery.innerHTML = '<div class="empty">No images yet. Upload one!</div>';
-          if (document.getElementById('stats')) {
-            document.getElementById('stats').innerText = '0 images';
-          }
+        if (!data.files || data.files.length === 0) {
+          gallery.innerHTML = '<div class="empty">No images uploaded yet. Upload one to get started!</div>';
+          document.getElementById('stats').innerText = '0 images';
           return;
         }
 
         gallery.innerHTML = data.files.map(f => \`
           <div class="image-item">
-            <img src="/uploads/\${encodeURIComponent(f)}" alt="\${f}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22130%22 height=%22130%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22130%22 height=%22130%22/%3E%3Ctext x=%2265%22 y=%2265%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%23999%22 font-size=%2214%22%3EImage%3C/text%3E%3C/svg%3E'">
-            <button class="delete-btn" onclick="deleteImage('\${f.replace(/'/g, %22%5C%27%22)}')">Delete</button>
+            <img src="/uploads/\${encodeURIComponent(f)}" alt="\${f}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22150%22 height=%22150%22/%3E%3Ctext x=%2275%22 y=%2275%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+            <button class="delete-btn" onclick="deleteImage('\${f}')">Delete</button>
           </div>
         \`).join('');
         
         document.getElementById('stats').innerText = data.files.length + ' image' + (data.files.length !== 1 ? 's' : '');
       } catch (err) {
-        console.error('Gallery load error:', err);
-        document.getElementById('gallery').innerHTML = '<div class="error">Error loading gallery: ' + err.message + '</div>';
+        gallery.innerHTML = '<div class="error">Error: ' + err.message + '</div>';
       }
     }
 
@@ -223,11 +221,7 @@ const server = http.createServer((req, res) => {
       el.className = 'message ' + type;
     }
 
-    // Initialize gallery immediately
-    document.getElementById('gallery').innerHTML = '<div class="empty">Loading...</div>';
-    
     // Load gallery on start
-    window.addEventListener('DOMContentLoaded', loadGallery);
     loadGallery();
   </script>
 </body>
@@ -244,11 +238,13 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      const filename = Date.now() + '-' + Math.random().toString(36).substr(2, 9) + path.extname(file.filename);
+      const filename = Date.now() + '-' + crypto.randomBytes(4).toString('hex') + path.extname(file.filename);
       const filepath = path.join(UPLOAD_DIR, filename);
 
       try {
         fs.writeFileSync(filepath, file.data);
+        imagesInMemory.push(filename);
+        
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, filename: filename }));
       } catch (err) {
@@ -263,11 +259,14 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/list' && method === 'GET') {
     try {
       const files = fs.readdirSync(UPLOAD_DIR);
+      imagesInMemory = files; // Keep in sync
+      
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ files: files }));
     } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
+      // If directory doesn't exist, return in-memory list
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ files: imagesInMemory }));
     }
     return;
   }
@@ -278,16 +277,17 @@ const server = http.createServer((req, res) => {
     const filename = query.filename;
     const filepath = path.join(UPLOAD_DIR, filename);
 
-    // Safety check
     if (!filepath.startsWith(UPLOAD_DIR)) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Invalid path' }));
+      res.end(JSON.stringify({ error: 'Invalid' }));
       return;
     }
 
     try {
       if (fs.existsSync(filepath)) {
         fs.unlinkSync(filepath);
+        imagesInMemory = imagesInMemory.filter(f => f !== filename);
+        
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true }));
       } else {
@@ -306,15 +306,24 @@ const server = http.createServer((req, res) => {
     const filename = decodeURIComponent(path.basename(pathname));
     const filepath = path.join(UPLOAD_DIR, filename);
 
-    // Safety check
     if (!filepath.startsWith(UPLOAD_DIR)) {
       res.writeHead(400);
-      res.end('Invalid path');
+      res.end('Invalid');
       return;
     }
 
     if (fs.existsSync(filepath)) {
-      res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+      const ext = path.extname(filename).toLowerCase();
+      const mimeTypes = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp'
+      };
+      const mime = mimeTypes[ext] || 'image/jpeg';
+      
+      res.writeHead(200, { 'Content-Type': mime });
       res.end(fs.readFileSync(filepath));
     } else {
       res.writeHead(404);
