@@ -133,6 +133,31 @@ app.post('/api/miners/:minerId/images/:imageId/primary', (req, res) => {
   }
 });
 
+// Add image by URL
+app.post('/api/miners/:minerId/images/add-url', (req, res) => {
+  try {
+    const { minerId } = req.params;
+    const { url } = req.body;
+
+    if (!url) return res.status(400).json({ error: 'URL required' });
+
+    // Verify miner exists
+    const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(minerId);
+    if (!miner) return res.status(404).json({ error: 'Miner not found' });
+
+    // Check if first image
+    const existingCount = db.prepare('SELECT COUNT(*) as count FROM miner_images WHERE miner_id = ?').get(minerId).count;
+    const isPrimary = existingCount === 0 ? 1 : 0;
+
+    // Save to database
+    db.prepare('INSERT INTO miner_images (miner_id, url, is_primary) VALUES (?, ?, ?)').run(minerId, url, isPrimary);
+
+    res.json({ success: true, url: url });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Routes
 app.use('/init', initRoutes);
 app.use('/api/auth', authRoutes);
