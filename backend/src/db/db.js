@@ -7,7 +7,12 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'miner_prices',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
-  ssl: process.env.DB_USE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  ssl: {
+    rejectUnauthorized: false,
+    minVersion: 'TLSv1.2'
+  },
+  connectionTimeoutMillis: 10000,
+  statement_timeout: 10000,
 });
 
 pool.on('error', (err) => {
