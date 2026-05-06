@@ -1,0 +1,167 @@
+.miner-image-uploader {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.uploader-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.uploader-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.toggle-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-btn:hover {
+  background: #0056b3;
+}
+
+.upload-form {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.file-input {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.file-input input {
+  display: none;
+}
+
+.file-btn {
+  display: block;
+  padding: 10px 15px;
+  background: #28a745;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.file-btn:hover {
+  background: #218838;
+}
+
+.message {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.message.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.message.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.no-images {
+  color: #999;
+  font-size: 13px;
+  margin: 0;
+  padding: 10px;
+  text-align: center;
+}
+
+.images-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.gallery-item {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f9f9f9;
+}
+
+.img-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.primary-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #28a745;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.img-actions {
+  padding: 8px;
+  display: flex;
+  gap: 6px;
+  flex-direction: column;
+}
+
+.action-btn {
+  padding: 6px 8px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #0056b3;
+}
+
+.action-btn.delete-btn {
+  background: #dc3545;
+}
+
+.action-btn.delete-btn:hover {
+  background: #c82333;
+}

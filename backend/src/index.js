@@ -48,36 +48,86 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Upload endpoints
-app.post('/api/images/upload', upload.single('image'), (req, res) => {
+// Upload endpoints for miner images
+app.post('/api/miners/:minerId/images/upload', upload.single('image'), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file' });
+    
+    const minerId = req.params.minerId;
+    
+    // Verify miner exists
+    const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(minerId);
+    if (!miner) return res.status(404).json({ error: 'Miner not found' });
+    
     const imageUrl = `/images/${req.file.filename}`;
+    
+    // Check if first image
+    const existingCount = db.prepare('SELECT COUNT(*) as count FROM miner_images WHERE miner_id = ?').get(minerId).count;
+    const isPrimary = existingCount === 0 ? 1 : 0;
+    
+    // Save to database
+    db.prepare('INSERT INTO miner_images (miner_id, url, is_primary) VALUES (?, ?, ?)').run(minerId, imageUrl, isPrimary);
+    
     res.json({ success: true, url: imageUrl, filename: req.file.filename });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/api/images/list', (req, res) => {
+app.get('/api/miners/:minerId/images', (req, res) => {
   try {
-    const files = require('fs').readdirSync(uploadDir);
-    res.json({ images: files.map(f => ({ filename: f, url: `/images/${f}` })) });
+    const minerId = req.params.minerId;
+    
+    // Verify miner exists
+    const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(minerId);
+    if (!miner) return res.status(404).json({ error: 'Miner not found' });
+    
+    const images = db.prepare('SELECT id, url, is_primary FROM miner_images WHERE miner_id = ? ORDER BY is_primary DESC, uploaded_at DESC').all(minerId);
+    
+    res.json({ images: images || [] });
   } catch (err) {
     res.json({ images: [] });
   }
 });
 
-app.delete('/api/images/:filename', (req, res) => {
+app.delete('/api/miners/:minerId/images/:imageId', (req, res) => {
   try {
-    const filepath = path.join(uploadDir, req.params.filename);
-    if (!filepath.startsWith(uploadDir)) return res.status(400).json({ error: 'Invalid' });
+    const { minerId, imageId } = req.params;
+    
+    // Verify image belongs to miner
+    const image = db.prepare('SELECT url FROM miner_images WHERE id = ? AND miner_id = ?').get(imageId, minerId);
+    if (!image) return res.status(404).json({ error: 'Image not found' });
+    
+    // Delete file
+    const filepath = path.join(uploadDir, path.basename(image.url));
     if (require('fs').existsSync(filepath)) {
       require('fs').unlinkSync(filepath);
-      res.json({ success: true });
-    } else {
-      res.status(404).json({ error: 'Not found' });
     }
+    
+    // Delete from database
+    db.prepare('DELETE FROM miner_images WHERE id = ?').run(imageId);
+    
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/miners/:minerId/images/:imageId/primary', (req, res) => {
+  try {
+    const { minerId, imageId } = req.params;
+    
+    // Verify image belongs to miner
+    const image = db.prepare('SELECT id FROM miner_images WHERE id = ? AND miner_id = ?').get(imageId, minerId);
+    if (!image) return res.status(404).json({ error: 'Image not found' });
+    
+    // Remove primary from all miner's images
+    db.prepare('UPDATE miner_images SET is_primary = 0 WHERE miner_id = ?').run(minerId);
+    
+    // Set this as primary
+    db.prepare('UPDATE miner_images SET is_primary = 1 WHERE id = ?').run(imageId);
+    
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
