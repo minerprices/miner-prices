@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: miner-prices-upload
+    runtime: node
+    plan: free
+    buildCommand: echo "Ready to start"
+    startCommand: node app.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
