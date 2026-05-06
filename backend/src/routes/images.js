@@ -4,7 +4,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { db } = require('../db/sqlite-init');
-const { downloadAndProcessImage, searchMinerImage } = require('../services/image-processor');
+const { downloadAndProcessImage } = require('../services/image-processor');
+const { getImageListForMiner } = require('../services/image-finder');
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, '../../public/miner-images');
@@ -158,36 +159,43 @@ router.delete('/:imageId', (req, res) => {
   }
 });
 
-// POST /api/images/search - Search for miner images
-router.post('/search', async (req, res) => {
+// GET /api/images/find/:minerId - Get list of 5 images for a miner
+router.get('/find/:minerId', (req, res) => {
   try {
-    const { minerName } = req.body;
-    
-    if (!minerName) {
-      return res.status(400).json({ error: 'Miner name required' });
+    const { minerId } = req.params;
+
+    // Get miner name
+    const miner = db.prepare('SELECT name FROM miners WHERE id = ?').get(minerId);
+    if (!miner) {
+      return res.status(404).json({ error: 'Miner not found' });
     }
 
-    const results = await searchMinerImage(minerName);
-    
+    // Get image list for this miner
+    const imageList = getImageListForMiner(miner.name);
+
     res.json({
       status: 'success',
-      query: minerName,
-      results: results,
-      message: 'Search results ready for download'
+      miner: miner.name,
+      images: imageList.map((url, idx) => ({
+        id: idx,
+        url: url,
+        title: `Image ${idx + 1}`
+      })),
+      message: 'Select one image to use for this miner'
     });
   } catch (error) {
-    console.error('Search error:', error);
-    res.status(500).json({ error: 'Search failed' });
+    console.error('Find error:', error);
+    res.status(500).json({ error: 'Failed to get images' });
   }
 });
 
-// POST /api/images/download-and-process - Download image, enhance, watermark, and save
-router.post('/download-and-process', async (req, res) => {
+// POST /api/images/select - User selects an image from the list
+router.post('/select', (req, res) => {
   try {
-    const { imageUrl, minerId } = req.body;
-    
-    if (!imageUrl || !minerId) {
-      return res.status(400).json({ error: 'Image URL and miner ID required' });
+    const { minerId, imageUrl } = req.body;
+
+    if (!minerId || !imageUrl) {
+      return res.status(400).json({ error: 'Miner ID and image URL required' });
     }
 
     // Verify miner exists
@@ -196,36 +204,27 @@ router.post('/download-and-process', async (req, res) => {
       return res.status(404).json({ error: 'Miner not found' });
     }
 
-    // Download, process (enhance saturation, add watermark)
-    const result = await downloadAndProcessImage(imageUrl, minerId);
-
     // Check if first image for this miner
     const existingCount = db.prepare('SELECT COUNT(*) as count FROM miner_images WHERE miner_id = ?').get(minerId).count;
     const isPrimary = existingCount === 0 ? 1 : 0;
 
-    // Save to database
+    // Save the selected image URL directly to database
     db.prepare(`
       INSERT INTO miner_images (miner_id, url, is_primary)
       VALUES (?, ?, ?)
-    `).run(minerId, result.url, isPrimary);
+    `).run(minerId, imageUrl, isPrimary);
 
     res.json({
       status: 'success',
-      message: 'Image downloaded, enhanced with saturation boost and watermark added',
+      message: 'Image selected and saved',
       image: {
-        filename: result.filename,
-        url: result.url,
-        is_primary: isPrimary,
-        enhancements: [
-          'Saturation increased by 30%',
-          'Quality optimized to 90%',
-          'Watermark added: minerprices.com'
-        ]
+        url: imageUrl,
+        is_primary: isPrimary
       }
     });
   } catch (error) {
-    console.error('Download error:', error);
-    res.status(500).json({ error: 'Failed to download and process image', details: error.message });
+    console.error('Select error:', error);
+    res.status(500).json({ error: 'Failed to select image', details: error.message });
   }
 });
 

@@ -6,11 +6,10 @@ const AdminImageManager = () => {
   const [selectedMiner, setSelectedMiner] = useState(null);
   const [minerImages, setMinerImages] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [searching, setSearching] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [searchResults, setSearchResults] = useState([]);
-  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [imageList, setImageList] = useState([]);
+  const [showImageList, setShowImageList] = useState(false);
 
   useEffect(() => {
     loadMiners();
@@ -128,70 +127,62 @@ const AdminImageManager = () => {
     }
   };
 
-  const searchImages = async () => {
-    if (!selectedMiner) return;
-
-    setSearching(true);
-    setMessage('');
-
-    try {
-      const response = await fetch('https://miner-prices.onrender.com/api/images/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ minerName: selectedMiner.name })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSearchResults(data.results || []);
-        setShowSearchResults(true);
-        setMessage('✅ Found images - select one to download');
-      } else {
-        setMessage(`❌ ${data.error}`);
-      }
-    } catch (error) {
-      setMessage('❌ Search failed');
-      console.error('Error:', error);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const downloadAndProcessImage = async (imageUrl) => {
+  const findImages = async () => {
     if (!selectedMiner) return;
 
     setUploading(true);
     setMessage('');
 
     try {
-      const response = await fetch('https://miner-prices.onrender.com/api/images/download-and-process', {
+      const response = await fetch(`https://miner-prices.onrender.com/api/images/find/${selectedMiner.id}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setImageList(data.images || []);
+        setShowImageList(true);
+        setMessage('✅ 5 images found - click to select one');
+      } else {
+        setMessage(`❌ ${data.error}`);
+      }
+    } catch (error) {
+      setMessage('❌ Failed to find images');
+      console.error('Error:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const selectImage = async (imageUrl) => {
+    if (!selectedMiner) return;
+
+    setUploading(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('https://miner-prices.onrender.com/api/images/select', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          imageUrl: imageUrl,
-          minerId: selectedMiner.id
+          minerId: selectedMiner.id,
+          imageUrl: imageUrl
         })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('✅ Image downloaded, enhanced with watermark, and saved!');
-        setShowSearchResults(false);
-        setSearchResults([]);
+        setMessage('✅ Image selected and saved!');
+        setShowImageList(false);
+        setImageList([]);
         loadMinerImages(selectedMiner.id);
       } else {
         setMessage(`❌ ${data.error}`);
       }
     } catch (error) {
-      setMessage('❌ Download failed');
+      setMessage('❌ Failed to select image');
       console.error('Error:', error);
     } finally {
       setUploading(false);
@@ -237,26 +228,26 @@ const AdminImageManager = () => {
 
                 {/* Upload Section */}
                 <div className="upload-section">
-                  <h3>Upload New Image</h3>
+                  <h3>Add Image</h3>
                   
-                  {/* Upload or Search Tabs */}
+                  {/* Two Options */}
                   <div className="upload-tabs">
                     <button
-                      className={`upload-tab ${!showSearchResults ? 'active' : ''}`}
-                      onClick={() => setShowSearchResults(false)}
+                      className={`upload-tab ${!showImageList ? 'active' : ''}`}
+                      onClick={() => setShowImageList(false)}
                     >
                       📤 Upload File
                     </button>
                     <button
-                      className={`upload-tab ${showSearchResults ? 'active' : ''}`}
-                      onClick={searchImages}
-                      disabled={searching || !selectedMiner}
+                      className={`upload-tab ${showImageList ? 'active' : ''}`}
+                      onClick={findImages}
+                      disabled={uploading || !selectedMiner}
                     >
-                      {searching ? '🔍 Searching...' : '🔍 Find & Auto-Download'}
+                      {uploading ? '⏳ Loading...' : '🔍 Find Image'}
                     </button>
                   </div>
 
-                  {!showSearchResults ? (
+                  {!showImageList ? (
                     <>
                       <label className="upload-input">
                         <input
@@ -274,30 +265,24 @@ const AdminImageManager = () => {
                       </p>
                     </>
                   ) : (
-                    <div className="search-results">
-                      <p className="results-info">
-                        {searchResults.length} images found - Click to download and enhance
+                    <div className="image-picker">
+                      <p className="picker-info">
+                        Select one of 5 images for {selectedMiner?.name}
                       </p>
-                      <div className="results-list">
-                        {searchResults.map((result, idx) => (
-                          <div key={idx} className="result-item">
-                            <div className="result-info">
-                              <span className="result-title">{result.title}</span>
-                              <span className="result-url">{result.url.substring(0, 50)}...</span>
+                      <div className="image-grid-small">
+                        {imageList.map((img, idx) => (
+                          <div
+                            key={idx}
+                            className="image-option"
+                            onClick={() => selectImage(img.url)}
+                          >
+                            <div className="image-preview-small">
+                              <img src={img.url} alt={`Option ${idx + 1}`} onError={(e) => e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23f0f0f0" width="100" height="100"/><text x="50" y="50" dominant-baseline="middle" text-anchor="middle" fill="%23999">Image {idx}</text></svg>'} />
                             </div>
-                            <button
-                              className="btn-download"
-                              onClick={() => downloadAndProcessImage(result.url)}
-                              disabled={uploading}
-                            >
-                              {uploading ? '⏳ Processing...' : '⬇️ Download & Process'}
-                            </button>
+                            <button className="btn-select">Select #{idx + 1}</button>
                           </div>
                         ))}
                       </div>
-                      <p className="enhancement-note">
-                        ✨ Each image will be enhanced with 30% saturation boost and minerprices.com watermark
-                      </p>
                     </div>
                   )}
                 </div>
