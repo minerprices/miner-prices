@@ -44,6 +44,32 @@ function initializeDB() {
       is_active INTEGER DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS coins (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      symbol TEXT UNIQUE,
+      name TEXT,
+      algorithm TEXT,
+      price REAL,
+      price_change_24h REAL,
+      block_time INTEGER,
+      block_reward REAL,
+      network_difficulty REAL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS miner_profitability (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      miner_id INTEGER,
+      coin_id INTEGER,
+      daily_profit REAL,
+      monthly_profit REAL,
+      yearly_profit REAL,
+      roi_days INTEGER,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(miner_id) REFERENCES miners(id),
+      FOREIGN KEY(coin_id) REFERENCES coins(id)
+    );
   `);
 
   // Check if miners exist
@@ -80,6 +106,36 @@ function initializeDB() {
 
     insertAll();
     console.log(`✅ Inserted ${miners.length} miners`);
+  }
+
+  // Check if coins exist
+  const coinCount = db.prepare('SELECT COUNT(*) as count FROM coins').get().count;
+
+  if (coinCount === 0) {
+    const insertCoin = db.prepare(`
+      INSERT INTO coins (symbol, name, algorithm, price, price_change_24h, block_time, block_reward)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const coins = [
+      ['BTC', 'Bitcoin', 'SHA256', 81400, 0.9, 600, 6.25],
+      ['ETH', 'Ethereum', 'Ethereum', 2400, 2.1, 12, 3.0],
+      ['LTC', 'Litecoin', 'Scrypt', 56.62, 2.7, 150, 6.25],
+      ['ZEC', 'Zcash', 'Equihash', 526.86, 3.2, 75, 3.125],
+      ['DOGE', 'Dogecoin', 'Scrypt', 0.115, 3.3, 60, 10000],
+      ['ETC', 'Ethereum Classic', 'Ethash', 9.18, 4.4, 12, 3.2],
+      ['KAS', 'Kaspa', 'Kaspa', 0.0347, 3.3, 15, 30],
+      ['RVN', 'Ravencoin', 'Kawpow', 0.006, 2.2, 60, 5000],
+      ['CKB', 'Nervos', 'Eaglesong', 0.0015, 2.4, 60, 5000],
+      ['XMR', 'Monero', 'RandomX', 408.96, 1.5, 120, 0.6],
+    ];
+
+    const insertAllCoins = db.transaction(() => {
+      coins.forEach(coin => insertCoin.run(...coin));
+    });
+
+    insertAllCoins();
+    console.log(`✅ Inserted ${coins.length} coins`);
   }
 
   // Check if admin exists

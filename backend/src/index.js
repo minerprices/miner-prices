@@ -9,6 +9,7 @@ const minersRoutes = require('./routes/miners');
 const locationsRoutes = require('./routes/locations');
 const adminRoutes = require('./routes/admin');
 const initRoutes = require('./routes/init-rest');
+const profitabilityRoutes = require('./routes/profitability');
 const { syncMiners } = require('./jobs/syncMiners');
 const { initializeDB } = require('./db/sqlite-init');
 
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/miners', minersRoutes);
 app.use('/api/locations', locationsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/profitability', profitabilityRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
