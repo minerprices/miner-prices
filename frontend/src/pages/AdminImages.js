@@ -85,7 +85,7 @@ const AdminImages = () => {
       formData.append('image', file);
       formData.append('minerId', selectedMiner.id);
 
-      const res = await fetch(`${BACKEND_API}/api/miner-images/upload`, {
+      const res = await fetch(`${BACKEND_API}/api/miners/upload-image`, {
         method: 'POST',
         body: formData
       });
