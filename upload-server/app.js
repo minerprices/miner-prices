@@ -177,6 +177,9 @@ const server = http.createServer((req, res) => {
     async function loadGallery() {
       try {
         const res = await fetch('/api/list');
+        if (!res.ok) {
+          throw new Error('API error: ' + res.status);
+        }
         const data = await res.json();
         
         const gallery = document.getElementById('gallery');
@@ -196,7 +199,8 @@ const server = http.createServer((req, res) => {
         
         document.getElementById('stats').innerText = data.files.length + ' image' + (data.files.length !== 1 ? 's' : '');
       } catch (err) {
-        document.getElementById('gallery').innerHTML = '<div class="error">Error loading gallery</div>';
+        console.error('Gallery load error:', err);
+        document.getElementById('gallery').innerHTML = '<div class="error">Error loading gallery: ' + err.message + '</div>';
       }
     }
 
