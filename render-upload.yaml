@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: image-upload
+    runtime: node
+    plan: free
+    buildCommand: echo "No build needed"
+    startCommand: node UPLOAD_APP.js
+    envVars:
+      - key: NODE_ENV
+        value: production
