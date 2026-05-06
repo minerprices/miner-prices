@@ -194,6 +194,24 @@ router.get('/', async (req, res) => {
   }
 });
 
+// PUT /:id - Update miner (e.g., set image_url)
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { image_url } = req.body;
+
+    const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(id);
+    if (!miner) {
+      return res.status(404).json({ error: 'Miner not found' });
+    }
+
+    db.prepare('UPDATE miners SET image_url = ? WHERE id = ?').run(image_url, id);
+    res.json({ success: true, message: 'Updated', id, image_url });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /:id - Get single miner
 router.get('/:id', async (req, res) => {
   try {

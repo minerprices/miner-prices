@@ -4,78 +4,45 @@ import './AdminImages.css';
 const AdminImages = () => {
   const [miners, setMiners] = useState([]);
   const [selectedMiner, setSelectedMiner] = useState(null);
-  const [images, setImages] = useState([]);
-  const [minerImages, setMinerImages] = useState([]);
+  const [availableImages, setAvailableImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('assign'); // 'assign' or 'general'
 
-  const UPLOAD_API = 'https://miner-prices-upload.onrender.com';
-  const BACKEND_API = 'https://miner-prices.onrender.com';
+  const UPLOAD_SERVER = 'https://miner-prices-upload.onrender.com';
+  const BACKEND = 'https://miner-prices.onrender.com';
 
   useEffect(() => {
     loadMiners();
-    loadGeneralImages();
+    loadAvailableImages();
   }, []);
-
-  useEffect(() => {
-    if (selectedMiner) {
-      loadMinerImages();
-    }
-  }, [selectedMiner]);
 
   const loadMiners = async () => {
     try {
-      const res = await fetch(`${BACKEND_API}/api/miners`);
+      const res = await fetch(`${BACKEND}/api/miners`);
       const data = await res.json();
       setMiners(data.miners || []);
-      if (data.miners && data.miners.length > 0) {
-        setSelectedMiner(data.miners[0]);
-      }
+      if (data.miners?.length) setSelectedMiner(data.miners[0]);
       setLoading(false);
     } catch (err) {
-      console.error('Error loading miners:', err);
+      console.error('Error:', err);
       setLoading(false);
     }
   };
 
-  const loadGeneralImages = async () => {
+  const loadAvailableImages = async () => {
     try {
-      const res = await fetch(`${UPLOAD_API}/api/list`);
+      const res = await fetch(`${UPLOAD_SERVER}/api/list`);
       const data = await res.json();
-      setImages(data.files || []);
+      setAvailableImages(data.files || []);
     } catch (err) {
-      console.error('Error loading general images:', err);
+      console.error('Error:', err);
     }
   };
 
-  const loadMinerImages = async () => {
-    if (!selectedMiner) return;
-    try {
-      // Get miner with image_url field
-      const res = await fetch(`${BACKEND_API}/api/miners/${selectedMiner.id}`);
-      const data = await res.json();
-      
-      if (data.miner && data.miner.image_url) {
-        setMinerImages([{ 
-          id: 1, 
-          url: data.miner.image_url, 
-          is_primary: 1,
-          filename: data.miner.image_url.split('/').pop()
-        }]);
-      } else {
-        setMinerImages([]);
-      }
-    } catch (err) {
-      console.error('Error loading miner images:', err);
-      setMinerImages([]);
-    }
-  };
-
-  const handleGeneralUpload = async (e) => {
+  const uploadImage = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !selectedMiner) return;
+    if (!file) return;
 
     setUploading(true);
     setMessage('Uploading...');
@@ -83,23 +50,21 @@ const AdminImages = () => {
     try {
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('minerId', selectedMiner.id);
 
-      const res = await fetch(`${BACKEND_API}/api/miners/upload-image`, {
+      const res = await fetch(`${UPLOAD_SERVER}/api/upload`, {
         method: 'POST',
         body: formData
       });
 
       const data = await res.json();
-
-      if (res.ok && data.success) {
-        setMessage('✅ Image uploaded and assigned!');
-        loadMinerImages();
+      if (data.success) {
+        setMessage('✅ Image uploaded!');
+        loadAvailableImages();
       } else {
-        setMessage(`❌ ${data.error || 'Upload failed'}`);
+        setMessage('❌ Upload failed');
       }
     } catch (err) {
-      setMessage('❌ Error uploading: ' + err.message);
+      setMessage('❌ Error: ' + err.message);
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -108,79 +73,78 @@ const AdminImages = () => {
 
   const assignImageToMiner = async (filename) => {
     if (!selectedMiner) {
-      setMessage('❌ No miner selected');
+      setMessage('❌ Select a miner first');
       return;
     }
 
-    const imageUrl = `/uploads/${filename}`;
-    
     try {
-      // Assign image to miner via POST
-      const res = await fetch(`${BACKEND_API}/api/miners/${selectedMiner.id}/image`, {
-        method: 'POST',
+      const imageUrl = `${UPLOAD_SERVER}/uploads/${encodeURIComponent(filename)}`;
+      
+      const res = await fetch(`${BACKEND}/api/miners/${selectedMiner.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_url: imageUrl })
       });
 
       const data = await res.json();
-
-      if (res.ok && data.success) {
-        setMessage(`✅ Image assigned to ${selectedMiner.name}`);
-        loadMinerImages();
+      if (data.success) {
+        setMessage(`✅ Assigned to ${selectedMiner.name}`);
+        // Update local miner object
+        const updated = miners.map(m => 
+          m.id === selectedMiner.id ? { ...m, image_url: imageUrl } : m
+        );
+        setMiners(updated);
+        setSelectedMiner({ ...selectedMiner, image_url: imageUrl });
       } else {
-        setMessage(`❌ ${data.error || 'Failed to assign image'}`);
+        setMessage(`❌ ${data.error}`);
       }
     } catch (err) {
-      setMessage('❌ Error assigning image: ' + err.message);
+      setMessage('❌ Error: ' + err.message);
     }
   };
 
-  const deleteGeneralImage = async (filename) => {
+  const removeImage = async () => {
+    if (!selectedMiner) return;
+
+    try {
+      const res = await fetch(`${BACKEND}/api/miners/${selectedMiner.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: null })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setMessage('✅ Image removed');
+        const updated = miners.map(m => 
+          m.id === selectedMiner.id ? { ...m, image_url: null } : m
+        );
+        setMiners(updated);
+        setSelectedMiner({ ...selectedMiner, image_url: null });
+      }
+    } catch (err) {
+      setMessage('❌ Error: ' + err.message);
+    }
+  };
+
+  const deleteImage = async (filename) => {
     if (!window.confirm(`Delete ${filename}?`)) return;
 
     try {
-      const res = await fetch(`${UPLOAD_API}/api/delete?filename=${encodeURIComponent(filename)}`);
-
+      const res = await fetch(`${UPLOAD_SERVER}/api/delete?filename=${encodeURIComponent(filename)}`);
       if (res.ok) {
-        setMessage('✅ Image deleted');
-        loadGeneralImages();
+        setMessage('✅ Deleted');
+        loadAvailableImages();
       } else {
         setMessage('❌ Delete failed');
       }
     } catch (err) {
-      setMessage('❌ Error deleting');
-    }
-  };
-
-  const removeImageFromMiner = async () => {
-    if (!selectedMiner) return;
-
-    try {
-      const res = await fetch(`${BACKEND_API}/api/miner-images/${selectedMiner.id}/remove`, {
-        method: 'POST'
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        setMessage('✅ Image removed from miner');
-        loadMinerImages();
-      } else {
-        setMessage(`❌ ${data.error || 'Failed to remove image'}`);
-      }
-    } catch (err) {
-      setMessage('❌ Error removing image');
+      setMessage('❌ Error: ' + err.message);
     }
   };
 
   if (loading) {
-    return (
-      <div className="admin-images">
-        <div className="container">
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
+    return <div className="admin-images"><div className="container"><p>Loading...</p></div></div>;
   }
 
   return (
@@ -195,7 +159,7 @@ const AdminImages = () => {
         )}
 
         <div className="layout">
-          {/* Left Sidebar: Miners */}
+          {/* Miners Sidebar */}
           <div className="sidebar">
             <h2>Miners</h2>
             <div className="miners-list">
@@ -206,117 +170,64 @@ const AdminImages = () => {
                   onClick={() => setSelectedMiner(miner)}
                 >
                   {miner.name}
-                  {miner.image_url && <span className="has-image">✓</span>}
+                  {miner.image_url && <span className="badge">✓</span>}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Right Content: Upload & Images */}
+          {/* Main Content */}
           <div className="main-content">
             {selectedMiner && (
               <>
-                <div className="miner-header">
-                  <h2>{selectedMiner.name}</h2>
-                  <p>{selectedMiner.algorithm}</p>
+                <h2>{selectedMiner.name}</h2>
+
+                {/* Current Image */}
+                {selectedMiner.image_url ? (
+                  <div className="current-image">
+                    <img src={selectedMiner.image_url} alt="Miner" />
+                    <button className="remove-btn" onClick={removeImage}>Remove</button>
+                  </div>
+                ) : (
+                  <p className="no-image">No image assigned</p>
+                )}
+
+                {/* Upload New */}
+                <div className="upload-section">
+                  <label className="upload-label">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={uploadImage}
+                      disabled={uploading}
+                    />
+                    <span className="upload-btn">
+                      {uploading ? '⏳ Uploading...' : '📤 Upload New Image'}
+                    </span>
+                  </label>
                 </div>
 
-                {/* Tabs */}
-                <div className="tabs">
-                  <button
-                    className={`tab-btn ${activeTab === 'assign' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('assign')}
-                  >
-                    📌 Current Image
-                  </button>
-                  <button
-                    className={`tab-btn ${activeTab === 'general' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('general')}
-                  >
-                    📤 Upload New
-                  </button>
-                </div>
-
-                {/* Current Image Tab */}
-                {activeTab === 'assign' && (
-                  <div className="tab-content">
-                    {minerImages.length > 0 ? (
-                      <div className="current-image">
-                        <img src={`${UPLOAD_API}${minerImages[0].url}`} alt="Miner" />
-                        <button
-                          className="remove-btn"
-                          onClick={removeImageFromMiner}
-                        >
-                          Remove Image
+                {/* Available Images */}
+                <h3>Available Images ({availableImages.length})</h3>
+                <div className="images-grid">
+                  {availableImages.map((filename) => (
+                    <div key={filename} className="image-card">
+                      <img
+                        src={`${UPLOAD_SERVER}/uploads/${encodeURIComponent(filename)}`}
+                        alt={filename}
+                        onError={(e) => { e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23ccc%22 width=%22150%22 height=%22150%22/%3E%3C/svg%3E'; }}
+                      />
+                      <div className="actions">
+                        <button className="assign-btn" onClick={() => assignImageToMiner(filename)}>
+                          Assign
+                        </button>
+                        <button className="delete-btn" onClick={() => deleteImage(filename)}>
+                          Delete
                         </button>
                       </div>
-                    ) : (
-                      <p className="no-image">No image assigned yet</p>
-                    )}
-
-                    <h3>Available Images</h3>
-                    <div className="images-grid">
-                      {images.map((filename) => (
-                        <div
-                          key={filename}
-                          className="image-item"
-                          onClick={() => assignImageToMiner(filename)}
-                        >
-                          <img
-                            src={`${UPLOAD_API}/uploads/${encodeURIComponent(filename)}`}
-                            alt={filename}
-                          />
-                          <button className="assign-btn">✓ Assign</button>
-                        </div>
-                      ))}
                     </div>
-                  </div>
-                )}
-
-                {/* Upload Tab */}
-                {activeTab === 'general' && (
-                  <div className="tab-content">
-                    <div className="upload-section">
-                      <label className="upload-label">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleGeneralUpload}
-                          disabled={uploading}
-                        />
-                        <span className="upload-btn">
-                          {uploading ? '⏳ Uploading...' : '📤 Upload Image'}
-                        </span>
-                      </label>
-                    </div>
-
-                    <h3>All Uploaded Images ({images.length})</h3>
-                    <div className="images-grid">
-                      {images.map((filename) => (
-                        <div key={filename} className="image-item">
-                          <img
-                            src={`${UPLOAD_API}/uploads/${encodeURIComponent(filename)}`}
-                            alt={filename}
-                          />
-                          <div className="item-actions">
-                            <button
-                              className="action-btn assign"
-                              onClick={() => assignImageToMiner(filename)}
-                            >
-                              Assign
-                            </button>
-                            <button
-                              className="action-btn delete"
-                              onClick={() => deleteGeneralImage(filename)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </>
             )}
           </div>
