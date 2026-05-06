@@ -10,13 +10,14 @@ const locationsRoutes = require('./routes/locations');
 const adminRoutes = require('./routes/admin');
 const initRoutes = require('./routes/init-rest');
 const { syncMiners } = require('./jobs/syncMiners');
-const { setupTables } = require('./db/setup-tables');
+const { initializeDB } = require('./db/sqlite-init');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Setup tables on startup
-setupTables().catch(err => console.error('Setup failed:', err));
+// Initialize local SQLite database on startup
+initializeDB();
+console.log('✅ Database initialized');
 
 // Middleware
 app.use(helmet());
