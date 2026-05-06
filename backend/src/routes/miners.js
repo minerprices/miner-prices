@@ -120,4 +120,26 @@ router.get('/api/algorithms', async (req, res) => {
   }
 });
 
+// PATCH /api/miners/:id - Update miner (e.g., set image_url)
+router.patch('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { image_url } = req.body;
+
+    // Verify miner exists
+    const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(id);
+    if (!miner) {
+      return res.status(404).json({ error: 'Miner not found' });
+    }
+
+    // Update image_url
+    db.prepare('UPDATE miners SET image_url = ? WHERE id = ?').run(image_url, id);
+
+    res.json({ success: true, message: 'Miner updated', id, image_url });
+  } catch (error) {
+    console.error('PATCH error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
