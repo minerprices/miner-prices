@@ -130,9 +130,11 @@ const server = http.createServer((req, res) => {
 
   <script>
     async function uploadImage() {
-      const file = document.getElementById('fileInput').files[0];
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      
       if (!file) {
-        showMessage('Choose a file first', 'error');
+        alert('Choose a file first');
         return;
       }
 
@@ -142,17 +144,26 @@ const server = http.createServer((req, res) => {
       showMessage('Uploading...', 'success');
 
       try {
-        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const res = await fetch('/api/upload', { 
+          method: 'POST', 
+          body: formData 
+        });
+        
+        if (!res.ok) {
+          throw new Error('Server error: ' + res.status);
+        }
+        
         const data = await res.json();
         
         if (data.success) {
           showMessage('✅ Uploaded: ' + data.filename, 'success');
-          document.getElementById('fileInput').value = '';
-          loadGallery();
+          fileInput.value = '';
+          setTimeout(() => loadGallery(), 1000);
         } else {
           showMessage('❌ ' + (data.error || 'Upload failed'), 'error');
         }
       } catch (err) {
+        console.error('Upload error:', err);
         showMessage('❌ Error: ' + err.message, 'error');
       }
     }
