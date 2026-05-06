@@ -38,35 +38,12 @@ const AdminDashboard = ({ onLogout }) => {
     loadData();
   }, [activeTab]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      if (activeTab === 'pending') {
-        const response = await adminAPI.getPendingVendors();
-        setPendingVendors(response.data.vendors);
-      } else if (activeTab === 'vendors') {
-        const response = await adminAPI.getAllVendors();
-        setAllVendors(response.data.vendors);
-      } else if (activeTab === 'stats') {
-        const response = await adminAPI.getStats();
-        setStats(response.data);
-      } else if (activeTab === 'logs') {
-        const response = await adminAPI.getSyncLogs();
-        setSyncLogs(response.data.logs);
-      }
-    } catch (err) {
-      setError('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleApprove = async (vendorId) => {
     try {
       const reason = prompt('Approval reason (optional):');
       if (reason !== null) {
         await adminAPI.approveVendor(vendorId, reason);
-        fetchData();
+        setActiveTab(activeTab); // Trigger refresh
       }
     } catch (err) {
       setError('Failed to approve vendor');
@@ -78,7 +55,7 @@ const AdminDashboard = ({ onLogout }) => {
       const reason = prompt('Rejection reason:');
       if (reason) {
         await adminAPI.rejectVendor(vendorId, reason);
-        fetchData();
+        setActiveTab(activeTab); // Trigger refresh
       }
     } catch (err) {
       setError('Failed to reject vendor');

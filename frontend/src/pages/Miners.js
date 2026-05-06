@@ -37,26 +37,7 @@ const Miners = () => {
     loadAlgorithms();
   }, []);
 
-  const fetchMiners = async () => {
-    try {
-      setLoading(true);
-      const response = await minersAPI.getAll(selectedAlgorithm, search);
-      setMiners(response.data.miners);
-    } catch (err) {
-      setError('Failed to fetch miners');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchAlgorithms = async () => {
-    try {
-      const response = await minersAPI.getAlgorithms();
-      setAlgorithms(response.data.algorithms);
-    } catch (err) {
-      console.error('Failed to fetch algorithms');
-    }
-  };
 
   return (
     <div className="container">
