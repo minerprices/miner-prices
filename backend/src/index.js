@@ -9,6 +9,7 @@ const minersRoutes = require('./routes/miners');
 const locationsRoutes = require('./routes/locations');
 const adminRoutes = require('./routes/admin');
 const imageUploadRoutes = require('./routes/image-upload');
+const imageRoutes = require('./routes/images');
 
 // File upload middleware
 const multer = require('multer');
@@ -202,6 +203,7 @@ app.use('/api/miners', minersRoutes);
 app.use('/api/locations', locationsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', imageUploadRoutes);
+app.use('/api/images', imageRoutes);
 app.use('/api/profitability', profitabilityRoutes);
 app.use('/api/calculator', calculatorRoutes);
 app.use('/api/vendors', vendorsRoutes);
