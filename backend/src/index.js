@@ -8,7 +8,7 @@ const authRoutes = require('./routes/auth');
 const minersRoutes = require('./routes/miners');
 const locationsRoutes = require('./routes/locations');
 const adminRoutes = require('./routes/admin');
-const initRoutes = require('./routes/init');
+const initRoutes = require('./routes/init-rest');
 const { syncMiners } = require('./jobs/syncMiners');
 
 const app = express();
