@@ -115,21 +115,21 @@ function initializeDB() {
 
   if (coinCount === 0) {
     const insertCoin = db.prepare(`
-      INSERT INTO coins (symbol, name, algorithm, price, price_change_24h, block_time, block_reward)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO coins (symbol, name, algorithm, price, price_change_24h, block_time, block_reward, network_difficulty)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const coins = [
-      ['BTC', 'Bitcoin', 'SHA256', 81400, 0.9, 600, 6.25],
-      ['ETH', 'Ethereum', 'Ethereum', 2400, 2.1, 12, 3.0],
-      ['LTC', 'Litecoin', 'Scrypt', 56.62, 2.7, 150, 6.25],
-      ['ZEC', 'Zcash', 'Equihash', 526.86, 3.2, 75, 3.125],
-      ['DOGE', 'Dogecoin', 'Scrypt', 0.115, 3.3, 60, 10000],
-      ['ETC', 'Ethereum Classic', 'Ethash', 9.18, 4.4, 12, 3.2],
-      ['KAS', 'Kaspa', 'Kaspa', 0.0347, 3.3, 15, 30],
-      ['RVN', 'Ravencoin', 'Kawpow', 0.006, 2.2, 60, 5000],
-      ['CKB', 'Nervos', 'Eaglesong', 0.0015, 2.4, 60, 5000],
-      ['XMR', 'Monero', 'RandomX', 408.96, 1.5, 120, 0.6],
+      ['BTC', 'Bitcoin', 'SHA256', 81400, 0.9, 600, 6.25, 100000],
+      ['LTC', 'Litecoin', 'Scrypt', 56.62, 2.7, 150, 6.25, 30000],
+      ['ZEC', 'Zcash', 'Equihash', 526.86, 3.2, 75, 3.125, 15000],
+      ['DOGE', 'Dogecoin', 'Scrypt', 0.115, 3.3, 60, 10000, 20000],
+      ['ETC', 'Ethereum Classic', 'Ethash', 9.18, 4.4, 12, 3.2, 40000],
+      ['KAS', 'Kaspa', 'Kaspa', 0.0347, 3.3, 15, 30, 5000],
+      ['RVN', 'Ravencoin', 'Kawpow', 0.006, 2.2, 60, 5000, 10000],
+      ['CKB', 'Nervos', 'Eaglesong', 0.0015, 2.4, 60, 5000, 8000],
+      ['XMR', 'Monero', 'RandomX', 408.96, 1.5, 120, 0.6, 50000],
+      ['BCH', 'Bitcoin Cash', 'SHA256', 461.56, 4.0, 600, 6.25, 50000],
     ];
 
     const insertAllCoins = db.transaction(() => {
