@@ -3,6 +3,28 @@ const router = express.Router();
 const { db } = require('../db/sqlite-init');
 const { syncWhattoMineMiners } = require('../services/whattomine');
 const { updateCoinPrices } = require('../services/coingecko');
+const { syncASICsToDatabase } = require('../services/whattomine-comprehensive');
+
+// POST /api/admin/sync-comprehensive - Sync ASICs, prices, and metadata
+router.post('/sync-comprehensive', async (req, res) => {
+  try {
+    console.log('🔄 Starting comprehensive sync...');
+    
+    const minersCount = await syncASICsToDatabase(db);
+    const pricesUpdated = await updateCoinPrices(db);
+
+    res.json({
+      status: 'success',
+      miners_synced: minersCount,
+      prices_updated: pricesUpdated ? 'yes' : 'no',
+      message: `Synced ${minersCount} ASIC miners and updated prices`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Comprehensive sync error:', error);
+    res.status(500).json({ error: 'Sync failed', details: error.message });
+  }
+});
 
 // POST /api/admin/sync-whattomine - Sync miners from WhattoMine
 router.post('/sync-whattomine', async (req, res) => {
@@ -12,12 +34,6 @@ router.post('/sync-whattomine', async (req, res) => {
     if (minersCount === 0) {
       return res.status(500).json({ error: 'Sync failed' });
     }
-
-    // Log the sync
-    db.prepare(`
-      INSERT INTO sync_log (miners_added, status)
-      VALUES (?, 'success')
-    `).run(minersCount);
 
     res.json({
       status: 'success',

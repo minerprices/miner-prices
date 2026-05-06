@@ -16,8 +16,16 @@ function initializeDB() {
       algorithm TEXT,
       power_consumption REAL,
       specs TEXT,
+      manufacturer TEXT,
+      cooling_type TEXT,
+      image_url TEXT,
+      tutorial_video_id TEXT,
+      tutorial_pdf_url TEXT,
+      firmware_url TEXT,
+      apps TEXT,
       is_active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS admins (
