@@ -1,10 +1,12 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const { seedComprehensiveData } = require('./seed-comprehensive');
 
 const dbPath = path.join(__dirname, '../../minerprices.db');
 const db = new Database(dbPath);
 
 function initializeDB() {
+  seedComprehensiveData();
   // Create tables
   db.exec(`
     CREATE TABLE IF NOT EXISTS miners (
