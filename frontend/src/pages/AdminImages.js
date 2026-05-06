@@ -75,7 +75,7 @@ const AdminImages = () => {
 
   const handleGeneralUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !selectedMiner) return;
 
     setUploading(true);
     setMessage('Uploading...');
@@ -83,8 +83,9 @@ const AdminImages = () => {
     try {
       const formData = new FormData();
       formData.append('image', file);
+      formData.append('minerId', selectedMiner.id);
 
-      const res = await fetch(`${UPLOAD_API}/api/upload`, {
+      const res = await fetch(`${BACKEND_API}/api/miner-images/upload`, {
         method: 'POST',
         body: formData
       });
@@ -92,10 +93,10 @@ const AdminImages = () => {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setMessage('✅ Image uploaded!');
-        setTimeout(() => loadGeneralImages(), 500);
+        setMessage('✅ Image uploaded and assigned!');
+        loadMinerImages();
       } else {
-        setMessage('❌ Upload failed');
+        setMessage(`❌ ${data.error || 'Upload failed'}`);
       }
     } catch (err) {
       setMessage('❌ Error uploading: ' + err.message);
@@ -155,9 +156,8 @@ const AdminImages = () => {
     if (!selectedMiner) return;
 
     try {
-      const res = await fetch(`${BACKEND_API}/api/miners/${selectedMiner.id}/image/remove`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+      const res = await fetch(`${BACKEND_API}/api/miner-images/${selectedMiner.id}/remove`, {
+        method: 'POST'
       });
 
       const data = await res.json();
