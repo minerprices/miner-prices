@@ -375,6 +375,153 @@
   color: #f44336;
 }
 
+/* Where to Buy Section */
+.where-to-buy-section {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 40px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.where-to-buy-section h2 {
+  margin: 0 0 25px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #212529;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.vendors-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.vendors-table thead {
+  background: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.vendors-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vendors-table td {
+  padding: 15px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.vendors-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.vendors-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.vendors-table tbody tr.out-of-stock {
+  opacity: 0.6;
+}
+
+.vendor-name {
+  font-weight: 600;
+  color: #007bff;
+}
+
+.vendors-table .in-stock {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.vendors-table .out-of-stock {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.price {
+  font-weight: 600;
+  color: #212529;
+}
+
+.roi {
+  font-weight: 600;
+  color: #ff9800;
+}
+
+.shop-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px;
+  transition: background 0.3s;
+}
+
+.shop-btn:hover {
+  background: #0056b3;
+}
+
+.vendors-table tbody tr.out-of-stock .shop-btn {
+  background: #adb5bd;
+  cursor: not-allowed;
+}
+
+/* FAQ Section */
+.faq-section {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 40px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.faq-section h2 {
+  margin: 0 0 25px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #212529;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+.faq-item {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+}
+
+.faq-item h3 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.faq-item p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #495057;
+}
+
 /* Description Section */
 .description-section {
   background: #f8f9fa;

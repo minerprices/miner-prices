@@ -299,6 +299,145 @@ const MinerDetailNew = () => {
         </table>
       </div>
 
+      {/* Where to Buy Section */}
+      <div className="where-to-buy-section">
+        <h2>Where to Buy?</h2>
+        <table className="vendors-table">
+          <thead>
+            <tr>
+              <th>Vendor</th>
+              <th>Country</th>
+              <th>Condition</th>
+              <th>Stock</th>
+              <th>Best Price</th>
+              <th>Price/TH</th>
+              <th>ROI</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Mock vendor data */}
+            {[
+              {
+                vendor: 'Crypto Miner Bros',
+                country: 'United States',
+                condition: 'Brand New',
+                stock: 'In Stock',
+                price: 12289.00,
+                price_per_th: 9102.96,
+                roi: 306,
+                url: '#',
+              },
+              {
+                vendor: 'ASIC Marketplace',
+                country: 'United States',
+                condition: 'Brand New',
+                stock: 'In Stock',
+                price: 12289.00,
+                price_per_th: 9102.96,
+                roi: 306,
+                coupon: 'MOON70',
+                url: '#',
+              },
+              {
+                vendor: 'One Miners',
+                country: 'United States',
+                condition: 'Brand New',
+                stock: 'In Stock',
+                price: 12478.00,
+                price_per_th: 9242.96,
+                roi: 311,
+                url: '#',
+              },
+              {
+                vendor: 'Yes Mining',
+                country: 'Hong Kong',
+                condition: 'Brand New',
+                stock: 'In Stock',
+                price: 18680.00,
+                price_per_th: 13837.04,
+                roi: 466,
+                url: '#',
+              },
+              {
+                vendor: 'millionminer.com',
+                country: 'Germany',
+                condition: 'Brand New',
+                stock: 'Out of Stock',
+                price: 19299.00,
+                price_per_th: 14295.56,
+                roi: 481,
+                url: '#',
+              },
+            ].map((offer, idx) => (
+              <tr key={idx} className={offer.stock === 'Out of Stock' ? 'out-of-stock' : ''}>
+                <td className="vendor-name">{offer.vendor}</td>
+                <td>{offer.country}</td>
+                <td>{offer.condition}</td>
+                <td className={offer.stock === 'In Stock' ? 'in-stock' : 'out-of-stock'}>
+                  {offer.stock}
+                </td>
+                <td className="price">${offer.price.toFixed(2)}</td>
+                <td>${offer.price_per_th.toFixed(2)}/TH</td>
+                <td className="roi">{offer.roi} Days</td>
+                <td>
+                  <a href={offer.url} className="shop-btn" target="_blank" rel="noopener noreferrer">
+                    {offer.coupon ? offer.coupon : 'SHOP'}
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* FAQ Section */}
+      <div className="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div className="faq-grid">
+          <div className="faq-item">
+            <h3>How long does it take to break even?</h3>
+            <p>
+              The ROI period is usually 6–964 days, depending on current Bitcoin price and electricity rates. 
+              It changes based on network difficulty and market conditions.
+            </p>
+          </div>
+          <div className="faq-item">
+            <h3>What is the daily profit?</h3>
+            <p>
+              Considering an electricity cost of $0.08/kWh, the {miner.name} generates approximately 
+              ${selectedCoin?.daily.toFixed(2) || '0.00'} daily, ${(selectedCoin?.daily * 30).toFixed(2) || '0.00'} monthly, 
+              and ${(selectedCoin?.yearly).toFixed(2) || '0.00'} yearly.
+            </p>
+          </div>
+          <div className="faq-item">
+            <h3>Is it still profitable?</h3>
+            <p>
+              Yes, as of today, the {miner.name} remains profitable for {miner.algorithm} mining. 
+              Profitability depends on electricity costs, Bitcoin price, and network difficulty.
+            </p>
+          </div>
+          <div className="faq-item">
+            <h3>What coins can it mine?</h3>
+            <p>
+              The {miner.name} mines {miner.algorithm} coins only: {minedCoins.map(c => c.name).join(', ')}.
+            </p>
+          </div>
+          <div className="faq-item">
+            <h3>Power consumption?</h3>
+            <p>
+              The {miner.name} consumes {miner.power}W with an efficiency of {miner.efficiency} {miner.efficiency_unit}.
+            </p>
+          </div>
+          <div className="faq-item">
+            <h3>Manufacturer?</h3>
+            <p>
+              The {miner.name} is manufactured by {miner.manufacturer}, a leading ASIC hardware producer.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Description */}
       <div className="description-section">
         <h2>About {miner.name}</h2>
