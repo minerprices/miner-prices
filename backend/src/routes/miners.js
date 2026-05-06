@@ -72,7 +72,7 @@ router.post('/:id/upload-image', upload.single('image'), (req, res) => {
   }
 });
 
-// PUT /:id - Update miner image_url
+// PUT /:id - Update miner image_url (with external URL)
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -83,8 +83,9 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Miner not found' });
     }
 
+    // Save the external URL directly to database
     db.prepare('UPDATE miners SET image_url = ? WHERE id = ?').run(image_url, id);
-    res.json({ success: true, message: 'Updated', id, image_url });
+    res.json({ success: true, message: 'Image URL saved', id, image_url });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

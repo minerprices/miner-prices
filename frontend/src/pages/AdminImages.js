@@ -4,7 +4,6 @@ import './AdminImages.css';
 const AdminImages = () => {
   const [miners, setMiners] = useState([]);
   const [selectedMiner, setSelectedMiner] = useState(null);
-  const [availableImages, setAvailableImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -28,30 +27,48 @@ const AdminImages = () => {
     }
   };
 
-
-
-  const uploadImage = async (e) => {
+  const handleUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !selectedMiner) return;
+    if (!file || !selectedMiner) {
+      setMessage('❌ Select miner and file');
+      return;
+    }
 
     setUploading(true);
-    setMessage('Uploading...');
+    setMessage('Uploading to image server...');
 
     try {
       const formData = new FormData();
       formData.append('image', file);
 
-      const res = await fetch(`${BACKEND}/api/miners/${selectedMiner.id}/upload-image`, {
+      // Upload to backend (which uploads to external ImgBB)
+      const uploadRes = await fetch(`${BACKEND}/api/upload`, {
         method: 'POST',
         body: formData
       });
 
-      const data = await res.json();
-      if (data.success) {
-        setMessage('✅ Image uploaded!');
-        loadMiners();
+      const uploadData = await uploadRes.json();
+
+      if (uploadData.success) {
+        setMessage('✅ Saving image URL to miner...');
+
+        // Now save the URL to the miner
+        const saveRes = await fetch(`${BACKEND}/api/miners/${selectedMiner.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_url: uploadData.url })
+        });
+
+        const saveData = await saveRes.json();
+
+        if (saveData.success) {
+          setMessage('✅ Image assigned!');
+          loadMiners();
+        } else {
+          setMessage(`❌ Save failed: ${saveData.error}`);
+        }
       } else {
-        setMessage(`❌ ${data.error || 'Upload failed'}`);
+        setMessage(`❌ Upload failed: ${uploadData.error}`);
       }
     } catch (err) {
       setMessage('❌ Error: ' + err.message);
@@ -60,8 +77,6 @@ const AdminImages = () => {
       e.target.value = '';
     }
   };
-
-
 
   const removeImage = async () => {
     if (!selectedMiner) return;
@@ -73,21 +88,14 @@ const AdminImages = () => {
         body: JSON.stringify({ image_url: null })
       });
 
-      const data = await res.json();
-      if (data.success) {
+      if (res.ok) {
         setMessage('✅ Image removed');
-        const updated = miners.map(m => 
-          m.id === selectedMiner.id ? { ...m, image_url: null } : m
-        );
-        setMiners(updated);
-        setSelectedMiner({ ...selectedMiner, image_url: null });
+        loadMiners();
       }
     } catch (err) {
       setMessage('❌ Error: ' + err.message);
     }
   };
-
-
 
   if (loading) {
     return <div className="admin-images"><div className="container"><p>Loading...</p></div></div>;
@@ -105,7 +113,6 @@ const AdminImages = () => {
         )}
 
         <div className="layout">
-          {/* Miners Sidebar */}
           <div className="sidebar">
             <h2>Miners</h2>
             <div className="miners-list">
@@ -122,38 +129,33 @@ const AdminImages = () => {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="main-content">
             {selectedMiner && (
               <>
                 <h2>{selectedMiner.name}</h2>
 
-                {/* Current Image */}
                 {selectedMiner.image_url ? (
                   <div className="current-image">
                     <img src={selectedMiner.image_url} alt="Miner" />
-                    <button className="remove-btn" onClick={removeImage}>Remove</button>
+                    <button className="remove-btn" onClick={removeImage}>Remove Image</button>
                   </div>
                 ) : (
                   <p className="no-image">No image assigned</p>
                 )}
 
-                {/* Upload New */}
                 <div className="upload-section">
                   <label className="upload-label">
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={uploadImage}
+                      onChange={handleUpload}
                       disabled={uploading}
                     />
                     <span className="upload-btn">
-                      {uploading ? '⏳ Uploading...' : '📤 Upload New Image'}
+                      {uploading ? '⏳ Uploading...' : '📤 Upload Image'}
                     </span>
                   </label>
                 </div>
-
-
               </>
             )}
           </div>
