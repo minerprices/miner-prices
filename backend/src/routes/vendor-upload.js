@@ -46,7 +46,7 @@ router.post('/:vendorId', upload.single('logo'), async (req, res) => {
 
     const response = await axios.post(IMGBB_API_URL, formData, {
       headers: formData.getHeaders(),
-      timeout: 30000
+      timeout: 10000
     });
 
     if (response.data.success && response.data.data) {

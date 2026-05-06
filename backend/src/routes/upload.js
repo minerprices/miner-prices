@@ -38,7 +38,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     // Upload to ImgBB
     const response = await axios.post(IMGBB_API_URL, formData, {
       headers: formData.getHeaders(),
-      timeout: 30000
+      timeout: 10000
     });
 
     if (response.data.success && response.data.data) {
