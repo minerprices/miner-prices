@@ -292,3 +292,40 @@
 .tab:hover {
   color: #0066cc;
 }
+
+/* Miner Card Links */
+.miner-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.miner-card-link:hover {
+  text-decoration: none;
+}
+
+.miner-card-link .miner-card {
+  transition: all 0.3s ease;
+}
+
+.miner-card-link:hover .miner-card {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+.view-detail-btn {
+  width: 100%;
+  padding: 10px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 15px;
+  transition: background 0.3s;
+}
+
+.view-detail-btn:hover {
+  background: #0056b3;
+}

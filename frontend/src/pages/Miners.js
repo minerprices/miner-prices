@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { minersAPI } from '../api';
 import './Pages.css';
 
@@ -79,16 +80,17 @@ const Miners = () => {
       ) : (
         <div className="miners-grid">
           {miners.map((miner) => (
-            <div key={miner.id} className="miner-card">
-              {miner.image_url && (
-                <img 
-                  src={miner.image_url} 
-                  alt={miner.name}
-                  style={{ maxWidth: '100%', marginBottom: '15px', borderRadius: '4px' }}
-                />
-              )}
-              
-              <h3>{miner.name}</h3>
+            <Link to={`/miner/${miner.id}`} key={miner.id} className="miner-card-link">
+              <div className="miner-card">
+                {miner.image_url && (
+                  <img 
+                    src={miner.image_url} 
+                    alt={miner.name}
+                    style={{ maxWidth: '100%', marginBottom: '15px', borderRadius: '4px' }}
+                  />
+                )}
+                
+                <h3>{miner.name}</h3>
               
               <div className="miner-specs">
                 {miner.algorithm && (
@@ -123,7 +125,10 @@ const Miners = () => {
               {miner.description && (
                 <p style={{ fontSize: '14px', color: '#666' }}>{miner.description}</p>
               )}
-            </div>
+              
+              <button className="view-detail-btn">View Details →</button>
+              </div>
+            </Link>
           ))}
         </div>
       )}
