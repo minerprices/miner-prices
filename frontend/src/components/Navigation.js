@@ -19,6 +19,7 @@ const Navigation = ({ isLoggedIn, onLogout }) => {
         
         <ul className="navbar-menu">
           <li><Link to="/miners">Miners</Link></li>
+          <li><Link to="/profitability">Profitability</Link></li>
           <li><Link to="/locations">Locations</Link></li>
           
           {!isLoggedIn ? (

@@ -6,6 +6,7 @@ import './App.css';
 import Home from './pages/Home';
 import Miners from './pages/Miners';
 import Locations from './pages/Locations';
+import Profitability from './pages/Profitability';
 import VendorLogin from './pages/VendorLogin';
 import VendorRegister from './pages/VendorRegister';
 import VendorDashboard from './pages/VendorDashboard';
@@ -33,6 +34,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/miners" element={<Miners />} />
         <Route path="/locations" element={<Locations />} />
+        <Route path="/profitability" element={<Profitability />} />
         
         <Route path="/vendor/login" element={<VendorLogin onLogin={handleLogin} />} />
         <Route path="/vendor/register" element={<VendorRegister onLogin={handleLogin} />} />

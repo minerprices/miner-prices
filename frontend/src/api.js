@@ -83,3 +83,13 @@ export const adminAPI = {
   syncMiners: () =>
     api.post('/admin/sync-miners'),
 };
+
+// Profitability endpoints
+export const profitabilityAPI = {
+  getAll: (params) =>
+    api.get('/profitability', { params }),
+  getMinerProfitability: (minerId) =>
+    api.get(`/profitability/miner/${minerId}`),
+  getRankings: (params) =>
+    api.get('/profitability/rankings', { params }),
+};
