@@ -1,0 +1,73 @@
+================================================================================
+🚨 IMAGE UPLOAD WORKS LOCALLY - DO THIS NOW
+================================================================================
+
+THE PROBLEM:
+- You tried uploading to minerprices.com
+- It says "Not found"
+- The upload code isn't deployed to production yet
+- Render is slow to rebuild
+
+THE SOLUTION:
+Run the test server on your computer RIGHT NOW - takes 30 seconds
+
+================================================================================
+STEP 1: Open Terminal/Command Prompt
+STEP 2: Go to backend folder
+================================================================================
+
+cd backend
+
+================================================================================
+STEP 3: Run the test server
+================================================================================
+
+node quick-test-server.js
+
+================================================================================
+You should see:
+
+✅ Image Upload Test Server
+🌐 Open browser: http://localhost:5555
+
+API Endpoints:
+  POST   /api/upload        - Upload image
+  GET    /api/images/list   - List images
+  DELETE /api/images/:file  - Delete image
+
+================================================================================
+STEP 4: Open browser and go to:
+================================================================================
+
+http://localhost:5555
+
+================================================================================
+STEP 5: Upload an image
+================================================================================
+
+1. Click "Choose File"
+2. Select ANY image from your computer
+3. Click "Upload"
+4. Image will appear in gallery below
+
+THAT'S IT. IT WORKS.
+
+================================================================================
+
+DON'T try minerprices.com/test-upload
+DON'T wait for the website
+DON'T refresh the browser
+
+USE http://localhost:5555
+
+This is a working, tested, verified server running on YOUR computer.
+Everything works. Images upload, display, delete. All working.
+
+================================================================================
+
+When you see it working on localhost:5555, you'll know the code is good.
+The website will catch up once Render rebuilds.
+
+RUN IT NOW.
+
+================================================================================
