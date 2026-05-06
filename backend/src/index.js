@@ -21,6 +21,8 @@ const { initializeDB } = require('./db/sqlite-init');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+console.log('🚀 STARTING WITH IMAGE UPLOAD ROUTES');
+
 // Initialize local SQLite database on startup
 initializeDB();
 console.log('✅ Database initialized - image upload ready');
