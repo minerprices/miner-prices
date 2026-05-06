@@ -49,7 +49,7 @@ router.post('/:vendorId', upload.single('logo'), async (req, res) => {
       timeout: 30000
     });
 
-    if (response.data.success) {
+    if (response.data.success && response.data.data) {
       const logoUrl = response.data.data.url;
 
       // Save URL to database
@@ -59,10 +59,11 @@ router.post('/:vendorId', upload.single('logo'), async (req, res) => {
         success: true,
         vendorId,
         logoUrl,
+        displayUrl: response.data.data.display_url,
         message: 'Logo uploaded successfully'
       });
     } else {
-      res.status(400).json({ error: 'ImgBB upload failed', details: response.data.error });
+      res.status(400).json({ error: 'ImgBB upload failed', details: response.data });
     }
   } catch (error) {
     console.error('Upload error:', error.message);
