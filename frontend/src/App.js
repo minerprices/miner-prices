@@ -18,6 +18,7 @@ import VendorDashboard from './pages/VendorDashboard';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSync from './pages/AdminSync';
+import MinerDetailEnhanced from './pages/MinerDetailEnhanced';
 import Navigation from './components/Navigation';
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/miners" element={<Miners />} />
         <Route path="/miner/:slug" element={<MinerDetailNew />} />
+        <Route path="/miner/:id/details" element={<MinerDetailEnhanced />} />
         <Route path="/locations" element={<Locations />} />
         <Route path="/profitability" element={<Profitability />} />
         <Route path="/calculator" element={<Calculator />} />
