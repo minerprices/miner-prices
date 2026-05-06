@@ -12,6 +12,7 @@ const imageUploadRoutes = require('./routes/image-upload');
 const imageRoutes = require('./routes/images');
 const minerImagesRoutes = require('./routes/miner-images');
 const uploadRoutes = require('./routes/upload');
+const vendorUploadRoutes = require('./routes/vendor-upload');
 
 // File upload middleware
 const multer = require('multer');
@@ -51,8 +52,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Upload endpoint (uses external ImgBB service)
+// Upload endpoints (uses external ImgBB service)
 app.use('/api/upload', uploadRoutes);
+app.use('/api/vendor-upload', vendorUploadRoutes);
 
 // Upload endpoints for miner images - SAVE TO FILES
 app.post('/api/miners/:minerId/images/upload', upload.single('image'), (req, res) => {
