@@ -11,6 +11,7 @@ import Profitability from './pages/Profitability';
 import Calculator from './pages/Calculator';
 import Vendors from './pages/Vendors';
 import Tools from './pages/Tools';
+import Comparison from './pages/Comparison';
 import VendorLogin from './pages/VendorLogin';
 import VendorRegister from './pages/VendorRegister';
 import VendorDashboard from './pages/VendorDashboard';
@@ -41,6 +42,7 @@ function App() {
         <Route path="/locations" element={<Locations />} />
         <Route path="/profitability" element={<Profitability />} />
         <Route path="/calculator" element={<Calculator />} />
+        <Route path="/comparison" element={<Comparison />} />
         <Route path="/vendors" element={<Vendors />} />
         <Route path="/tools" element={<Tools />} />
         

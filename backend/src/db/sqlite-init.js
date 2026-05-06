@@ -154,6 +154,34 @@ function initializeDB() {
 
     console.log('✅ Admin account created');
   }
+
+  // Add OneMiriers as test vendor (pre-approved for demo)
+  const vendorCount = db.prepare('SELECT COUNT(*) as count FROM vendors WHERE company_name = ?').get('OneMiriers');
+  
+  if (!vendorCount || vendorCount.count === 0) {
+    const bcrypt = require('bcryptjs');
+    const hash = bcrypt.hashSync('oneminers123', 10);
+
+    db.prepare(`
+      INSERT INTO vendors (email, password_hash, company_name, approved)
+      VALUES (?, ?, ?, 1)
+    `).run('support@oneminers.com', hash, 'OneMiriers');
+
+    // Add OneMiriers hosting location
+    const vendorId = db.prepare('SELECT id FROM vendors WHERE company_name = ?').get('OneMiriers').id;
+    
+    db.prepare(`
+      INSERT INTO locations (vendor_id, name, country, hosting_fee_per_kwh, is_active)
+      VALUES (?, ?, ?, ?, 1)
+    `).run(vendorId, 'OneMiriers USA Facility', 'United States', 0.05);
+
+    db.prepare(`
+      INSERT INTO locations (vendor_id, name, country, hosting_fee_per_kwh, is_active)
+      VALUES (?, ?, ?, ?, 1)
+    `).run(vendorId, 'OneMiriers Iceland Facility', 'Iceland', 0.04);
+
+    console.log('✅ OneMiriers vendor and locations added');
+  }
 }
 
 module.exports = { db, initializeDB };
