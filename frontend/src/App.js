@@ -55,6 +55,7 @@ function App() {
         <Route path="/images" element={<ImageGallery />} />
         <Route path="/test-upload" element={<TestUpload />} />
         <Route path="/admin/test-images" element={<AdminImageManager />} />
+        <Route path="/admin/test-miner-images" element={<AdminMinerImages />} />
         
         <Route path="/vendor/login" element={<VendorLogin onLogin={handleLogin} />} />
         <Route path="/vendor/register" element={<VendorRegister onLogin={handleLogin} />} />

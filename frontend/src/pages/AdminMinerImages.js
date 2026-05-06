@@ -2,35 +2,58 @@ import React, { useState, useEffect } from 'react';
 import './AdminMinerImages.css';
 
 const AdminMinerImages = () => {
+  const [miners, setMiners] = useState([]);
+  const [selectedMiner, setSelectedMiner] = useState(null);
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Use the standalone upload server that's working
-  const API = 'https://miner-prices-upload.onrender.com';
+  // Use the backend API
+  const API_BASE = process.env.REACT_APP_API_BASE || 'https://miner-prices.onrender.com';
 
   useEffect(() => {
-    loadImages();
+    loadMiners();
   }, []);
 
-  const loadImages = async () => {
+  useEffect(() => {
+    if (selectedMiner) {
+      loadMinerImages();
+    }
+  }, [selectedMiner]);
+
+  const loadMiners = async () => {
     try {
-      // Get images from upload server
-      const res = await fetch(`${API}/api/list`);
+      const res = await fetch(`${API_BASE}/api/miners`);
       const data = await res.json();
-      setImages(data.files || []);
+      const minersList = data.miners || [];
+      setMiners(minersList);
+      if (minersList.length > 0) {
+        setSelectedMiner(minersList[0]);
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error('Error loading miners:', err);
+      setMessage('❌ Failed to load miners');
+      setLoading(false);
+    }
+  };
+
+  const loadMinerImages = async () => {
+    if (!selectedMiner) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/images/miner/${selectedMiner.id}`);
+      const data = await res.json();
+      setImages(data.images || []);
     } catch (err) {
       console.error('Error loading images:', err);
       setImages([]);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !selectedMiner) return;
 
     setUploading(true);
     setMessage('Uploading...');
@@ -38,101 +61,180 @@ const AdminMinerImages = () => {
     try {
       const formData = new FormData();
       formData.append('image', file);
+      formData.append('minerId', selectedMiner.id);
 
-      const res = await fetch(`${API}/api/upload`, {
+      const res = await fetch(`${API_BASE}/api/images/upload`, {
         method: 'POST',
         body: formData
       });
 
       const data = await res.json();
 
-      if (res.ok) {
+      if (res.ok && data.success) {
         setMessage('✅ Image uploaded!');
-        loadImages();
+        setTimeout(() => loadMinerImages(), 500);
       } else {
         setMessage('❌ ' + (data.error || 'Upload failed'));
       }
     } catch (err) {
-      setMessage('❌ Error uploading');
+      setMessage('❌ Error uploading: ' + err.message);
       console.error('Error:', err);
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
-  const deleteImage = async (filename) => {
-    if (!window.confirm(`Delete ${filename}?`)) return;
+  const setPrimary = async (imageId) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/images/${imageId}/primary`, {
+        method: 'POST'
+      });
+
+      if (res.ok) {
+        setMessage('✅ Primary image updated');
+        loadMinerImages();
+      } else {
+        setMessage('❌ Error setting primary');
+      }
+    } catch (err) {
+      setMessage('❌ Error: ' + err.message);
+    }
+  };
+
+  const deleteImage = async (imageId) => {
+    if (!window.confirm('Delete this image?')) return;
 
     try {
-      const res = await fetch(`${API}/api/delete?filename=${encodeURIComponent(filename)}`);
+      const res = await fetch(`${API_BASE}/api/images/${imageId}`, {
+        method: 'DELETE'
+      });
 
       if (res.ok) {
         setMessage('✅ Image deleted');
-        loadImages();
+        loadMinerImages();
       } else {
         setMessage('❌ Delete failed');
       }
     } catch (err) {
-      setMessage('❌ Error deleting');
-      console.error('Error:', err);
+      setMessage('❌ Error deleting: ' + err.message);
     }
   };
 
-  if (loading) return <div className="admin-miner-images"><p>Loading...</p></div>;
+  if (loading) {
+    return (
+      <div className="admin-miner-images">
+        <div className="container">
+          <p>Loading miners...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (miners.length === 0) {
+    return (
+      <div className="admin-miner-images">
+        <div className="container">
+          <p>No miners found in database</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-miner-images">
-      <h1>🖼️ Image Gallery</h1>
+      <div className="container">
+        <h1>🖼️ Miner Image Manager</h1>
 
-      <div className="admin-container">
         {message && (
-          <p className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
+          <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
             {message}
-          </p>
+          </div>
         )}
 
-        <div className="upload-section">
-          <label className="upload-label">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleUpload}
-              disabled={uploading}
-            />
-            <span className="upload-btn">
-              {uploading ? '⏳ Uploading...' : '📤 Upload Image'}
-            </span>
-          </label>
-        </div>
-
-        <div className="gallery">
-          <h2>Gallery ({images.length} images)</h2>
-          {images.length === 0 ? (
-            <p className="no-images">No images yet. Upload one to get started!</p>
-          ) : (
-            <div className="images-grid">
-              {images.map((filename) => (
-                <div key={filename} className="image-card">
-                  <div className="image-wrapper">
-                    <img 
-                      src={`${API}/uploads/${encodeURIComponent(filename)}`} 
-                      alt={filename}
-                      onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22150%22 height=%22150%22/%3E%3Ctext x=%2275%22 y=%2275%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'"
-                    />
-                  </div>
-                  <div className="image-info">
-                    <p className="filename">{filename}</p>
-                  </div>
-                  <button
-                    className="delete-btn"
-                    onClick={() => deleteImage(filename)}
-                  >
-                    Delete
-                  </button>
-                </div>
+        <div className="layout">
+          {/* Miners Sidebar */}
+          <div className="miners-sidebar">
+            <h2>Miners</h2>
+            <div className="miners-list">
+              {miners.map((miner) => (
+                <button
+                  key={miner.id}
+                  className={`miner-btn ${selectedMiner?.id === miner.id ? 'active' : ''}`}
+                  onClick={() => setSelectedMiner(miner)}
+                >
+                  {miner.name}
+                </button>
               ))}
             </div>
+          </div>
+
+          {/* Main Content */}
+          {selectedMiner && (
+            <div className="main-content">
+              <div className="miner-header">
+                <h2>{selectedMiner.name}</h2>
+                <p className="miner-algo">{selectedMiner.algorithm || 'N/A'}</p>
+              </div>
+
+              {/* Upload Section */}
+              <div className="upload-section">
+                <label className="upload-label">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUpload}
+                    disabled={uploading}
+                  />
+                  <span className="upload-btn">
+                    {uploading ? '⏳ Uploading...' : '📤 Upload Image'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Images Grid */}
+              <div className="images-section">
+                <h3>Images ({images.length})</h3>
+                {images.length === 0 ? (
+                  <p className="no-images">No images yet. Upload one to get started!</p>
+                ) : (
+                  <div className="images-grid">
+                    {images.map((img) => (
+                      <div key={img.id} className="image-card">
+                        <div className="image-container">
+                          <img src={img.url} alt={`Image ${img.id}`} />
+                          {img.is_primary === 1 && (
+                            <span className="primary-badge">⭐ Primary</span>
+                          )}
+                        </div>
+                        <div className="image-actions">
+                          {img.is_primary === 0 && (
+                            <button
+                              className="action-btn primary-btn"
+                              onClick={() => setPrimary(img.id)}
+                            >
+                              Set Primary
+                            </button>
+                          )}
+                          <button
+                            className="action-btn delete-btn"
+                            onClick={() => deleteImage(img.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
+        </div>
+
+        <div className="debug-info">
+          <p>API: {API_BASE}</p>
+          <p>Miner: {selectedMiner?.name || 'None'}</p>
         </div>
       </div>
     </div>

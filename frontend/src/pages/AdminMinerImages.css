@@ -1,46 +1,127 @@
 .admin-miner-images {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
-  padding: 20px;
+  padding: 40px 20px;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .admin-miner-images h1 {
   color: white;
   text-align: center;
   margin-bottom: 30px;
-  font-size: 32px;
-}
-
-.admin-container {
-  max-width: 1000px;
-  margin: 0 auto;
+  font-size: 36px;
+  font-weight: 700;
 }
 
 .message {
-  padding: 14px;
+  padding: 16px 20px;
   margin-bottom: 20px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .message.success {
   background: #d4edda;
   color: #155724;
+  border: 1px solid #c3e6cb;
 }
 
 .message.error {
   background: #f8d7da;
   color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 20px;
+}
+
+/* Miners Sidebar */
+.miners-sidebar {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+.miners-sidebar h2 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  color: #333;
+  font-weight: 700;
+}
+
+.miners-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.miner-btn {
+  padding: 12px 15px;
+  background: #f5f5f5;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: left;
+  transition: all 0.2s;
+  color: #333;
+}
+
+.miner-btn:hover {
+  background: #e8e8e8;
+  border-color: #667eea;
+}
+
+.miner-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+/* Main Content */
+.main-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.miner-header {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.miner-header h2 {
+  margin: 0;
+  font-size: 28px;
+  color: #333;
+  font-weight: 700;
+}
+
+.miner-algo {
+  margin: 8px 0 0 0;
+  color: #666;
+  font-size: 14px;
 }
 
 /* Upload Section */
 .upload-section {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  margin-bottom: 30px;
+  margin-bottom: 35px;
 }
 
 .upload-label {
@@ -52,39 +133,36 @@
 }
 
 .upload-btn {
-  display: block;
-  padding: 16px;
-  background: #28a745;
+  display: inline-block;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
   color: white;
-  border-radius: 6px;
-  text-align: center;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  border-radius: 8px;
+  font-weight: 700;
   font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .upload-btn:hover {
-  background: #218838;
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
 }
 
 .upload-btn:active {
   transform: translateY(0);
 }
 
-/* Gallery */
-.gallery {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+/* Images Section */
+.images-section {
+  margin-top: 40px;
 }
 
-.gallery h2 {
+.images-section h3 {
   margin: 0 0 20px 0;
-  font-size: 24px;
+  font-size: 20px;
   color: #333;
+  font-weight: 700;
 }
 
 .no-images {
@@ -92,90 +170,141 @@
   padding: 40px 20px;
   text-align: center;
   background: #f9f9f9;
-  border-radius: 6px;
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 15px;
 }
 
 .images-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
 }
 
 .image-card {
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   background: #f9f9f9;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .image-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.image-wrapper {
+.image-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 1;
-  overflow: hidden;
+  height: 180px;
   background: #f0f0f0;
+  overflow: hidden;
 }
 
-.image-wrapper img {
+.image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.image-info {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.filename {
-  margin: 0;
+.primary-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ffc107;
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 700;
   font-size: 12px;
-  color: #666;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: monospace;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.delete-btn {
-  width: 100%;
-  padding: 10px;
-  background: #dc3545;
-  color: white;
+.image-actions {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.action-btn {
+  padding: 10px 12px;
   border: none;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
   font-size: 12px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+}
+
+.primary-btn {
+  background: #ffc107;
+  color: #333;
+}
+
+.primary-btn:hover {
+  background: #ffb300;
+  transform: scale(1.02);
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
 }
 
 .delete-btn:hover {
   background: #c82333;
+  transform: scale(1.02);
 }
 
-.delete-btn:active {
-  transform: scale(0.98);
+.debug-info {
+  margin-top: 40px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #666;
+  font-family: monospace;
+}
+
+.debug-info p {
+  margin: 5px 0;
 }
 
 @media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .miners-sidebar {
+    position: static;
+  }
+
+  .miners-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .miner-btn {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .main-content {
+    padding: 20px;
+  }
+
   .images-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  .image-container {
+    height: 140px;
   }
 
   .admin-miner-images h1 {
-    font-size: 24px;
-  }
-
-  .upload-section,
-  .gallery {
-    padding: 20px;
+    font-size: 28px;
   }
 }
