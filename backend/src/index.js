@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 5000;
 
 // Initialize local SQLite database on startup
 initializeDB();
-console.log('✅ Database initialized');
+console.log('✅ Database initialized - image upload ready');
 
 // Middleware
 app.use(helmet());
