@@ -13,7 +13,7 @@ const MinerImageUploader = ({ minerId, minerName, onImageAdded }) => {
 
   const loadImages = async () => {
     try {
-      const res = await fetch(`https://miner-prices.onrender.com/api/miners/${minerId}/images`);
+      const res = await fetch(`https://miner-prices-upload.onrender.com/api/miners/${minerId}/images`);
       if (res.ok) {
         const data = await res.json();
         setImages(data.images || []);
@@ -34,7 +34,7 @@ const MinerImageUploader = ({ minerId, minerName, onImageAdded }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const res = await fetch(`https://miner-prices.onrender.com/api/miners/${minerId}/images/upload`, {
+      const res = await fetch(`https://miner-prices-upload.onrender.com/api/miners/${minerId}/images/upload`, {
         method: 'POST',
         body: formData
       });
@@ -59,7 +59,7 @@ const MinerImageUploader = ({ minerId, minerName, onImageAdded }) => {
 
   const setPrimary = async (imageId) => {
     try {
-      const res = await fetch(`https://miner-prices.onrender.com/api/miners/${minerId}/images/${imageId}/primary`, {
+      const res = await fetch(`https://miner-prices-upload.onrender.com/api/miners/${minerId}/images/${imageId}/primary`, {
         method: 'POST'
       });
 
@@ -76,7 +76,7 @@ const MinerImageUploader = ({ minerId, minerName, onImageAdded }) => {
     if (!window.confirm('Delete image?')) return;
 
     try {
-      const res = await fetch(`https://miner-prices.onrender.com/api/miners/${minerId}/images/${imageId}`, {
+      const res = await fetch(`https://miner-prices-upload.onrender.com/api/miners/${minerId}/images/${imageId}`, {
         method: 'DELETE'
       });
 

@@ -12,7 +12,8 @@ const AdminMinerImages = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const API = 'https://miner-prices.onrender.com';
+  // Use the standalone upload server that's working
+  const API = 'https://miner-prices-upload.onrender.com';
 
   useEffect(() => {
     loadMiners();
@@ -26,7 +27,8 @@ const AdminMinerImages = () => {
 
   const loadMiners = async () => {
     try {
-      const res = await fetch(`${API}/api/miners`);
+      // Get miners from main server
+      const res = await fetch('https://miner-prices.onrender.com/api/miners');
       const data = await res.json();
       setMiners(data.miners || []);
       if (data.miners && data.miners.length > 0) {
@@ -41,11 +43,13 @@ const AdminMinerImages = () => {
 
   const loadMinerImages = async () => {
     try {
+      // Get images from upload server
       const res = await fetch(`${API}/api/miners/${selectedMiner.id}/images`);
       const data = await res.json();
       setMinerImages(data.images || []);
     } catch (err) {
       console.error('Error loading images:', err);
+      setMinerImages([]);
     }
   };
 
