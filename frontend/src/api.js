@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Use Render backend URL or fallback to localhost
+const API_BASE = process.env.REACT_APP_API_URL || 'https://miner-prices.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE,
