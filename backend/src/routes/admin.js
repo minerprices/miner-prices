@@ -5,19 +5,111 @@ const { syncWhattoMineMiners } = require('../services/whattomine');
 const { updateCoinPrices } = require('../services/coingecko');
 const { syncASICsToDatabase } = require('../services/whattomine-comprehensive');
 
+// POST /api/admin/sync-photos - Add photos to existing miners (non-destructive)
+router.post('/sync-photos', async (req, res) => {
+  try {
+    console.log('📸 Adding photos to existing miners...');
+    
+    const { getMinerMetadata } = require('../db/miner-photos');
+    
+    // Get all miners
+    const miners = db.prepare('SELECT id, name FROM miners').all();
+    let updated = 0;
+
+    miners.forEach(miner => {
+      const metadata = getMinerMetadata(miner.name);
+      if (metadata) {
+        db.prepare(`
+          UPDATE miners 
+          SET image_url = ?, manufacturer = ?, cooling_type = ?, 
+              tutorial_video_id = ?, tutorial_pdf_url = ?, 
+              firmware_url = ?, apps = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(
+          metadata.image_url,
+          metadata.manufacturer,
+          metadata.cooling_type,
+          metadata.tutorial_video_id,
+          metadata.tutorial_pdf_url,
+          metadata.firmware_url,
+          JSON.stringify(metadata.apps),
+          miner.id
+        );
+        updated++;
+      }
+    });
+
+    console.log(`✅ Updated ${updated} miners with photos and metadata`);
+    
+    // Log the update
+    db.prepare(`
+      INSERT INTO sync_log (miners_added, status)
+      VALUES (?, 'photo_sync')
+    `).run(updated);
+
+    res.json({
+      status: 'success',
+      miners_updated: updated,
+      message: `Added photos and metadata to ${updated} miners`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Photo sync error:', error);
+    res.status(500).json({ error: 'Photo sync failed', details: error.message });
+  }
+});
+
 // POST /api/admin/sync-comprehensive - Sync ASICs, prices, and metadata
 router.post('/sync-comprehensive', async (req, res) => {
   try {
     console.log('🔄 Starting comprehensive sync...');
     
-    const minersCount = await syncASICsToDatabase(db);
+    const { getMinerMetadata } = require('../db/miner-photos');
+    
+    // Update photos for existing miners first
+    const miners = db.prepare('SELECT id, name FROM miners').all();
+    let photosUpdated = 0;
+
+    miners.forEach(miner => {
+      const metadata = getMinerMetadata(miner.name);
+      if (metadata) {
+        db.prepare(`
+          UPDATE miners 
+          SET image_url = ?, manufacturer = ?, cooling_type = ?, 
+              tutorial_video_id = ?, tutorial_pdf_url = ?, 
+              firmware_url = ?, apps = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(
+          metadata.image_url,
+          metadata.manufacturer,
+          metadata.cooling_type,
+          metadata.tutorial_video_id,
+          metadata.tutorial_pdf_url,
+          metadata.firmware_url,
+          JSON.stringify(metadata.apps),
+          miner.id
+        );
+        photosUpdated++;
+      }
+    });
+
+    // Update prices
     const pricesUpdated = await updateCoinPrices(db);
+
+    console.log(`✅ Photos updated: ${photosUpdated}, Prices: ${pricesUpdated ? 'yes' : 'no'}`);
+    
+    // Log the comprehensive sync
+    db.prepare(`
+      INSERT INTO sync_log (miners_added, status)
+      VALUES (?, 'comprehensive')
+    `).run(miners.length);
 
     res.json({
       status: 'success',
-      miners_synced: minersCount,
+      miners_with_photos: photosUpdated,
+      total_miners: miners.length,
       prices_updated: pricesUpdated ? 'yes' : 'no',
-      message: `Synced ${minersCount} ASIC miners and updated prices`,
+      message: `Updated ${photosUpdated} miners with photos. Total miners: ${miners.length}`,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
