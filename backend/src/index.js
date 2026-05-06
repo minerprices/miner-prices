@@ -84,3 +84,4 @@ app.listen(PORT, () => {
   console.log(`📧 Admin email: admin@minerprices.com`);
   console.log(`🔄 Daily sync scheduled at 2 AM UTC`);
 });
+// Force redeploy 1778041773
