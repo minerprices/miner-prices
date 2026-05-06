@@ -1,6 +1,7 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const { seedComprehensiveData } = require('./seed-comprehensive');
+const { initializeMinerPhotos } = require('./init-miner-photos');
 
 const dbPath = path.join(__dirname, '../../minerprices.db');
 const db = new Database(dbPath);
@@ -190,6 +191,9 @@ function initializeDB() {
 
     console.log('✅ OneMiriers vendor and locations added');
   }
+
+  // Initialize miner photos
+  initializeMinerPhotos(db);
 }
 
 module.exports = { db, initializeDB };
