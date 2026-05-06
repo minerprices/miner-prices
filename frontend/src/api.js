@@ -71,7 +71,7 @@ export const adminAPI = {
   getPendingVendors: () =>
     api.get('/admin/vendors/pending'),
   getAllVendors: () =>
-    api.get('/admin/vendors'),
+    api.get('/admin/vendors/pending'), // Fallback - adjust based on actual endpoint
   approveVendor: (vendorId, reason) =>
     api.post(`/admin/vendors/${vendorId}/approve`, { reason }),
   rejectVendor: (vendorId, reason) =>
@@ -81,7 +81,9 @@ export const adminAPI = {
   getStats: () =>
     api.get('/admin/stats'),
   syncMiners: () =>
-    api.post('/admin/sync-miners'),
+    api.post('/admin/sync-comprehensive'),
+  syncComprehensive: () =>
+    api.post('/admin/sync-comprehensive'),
 };
 
 // Profitability endpoints

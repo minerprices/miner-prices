@@ -20,10 +20,10 @@ const AdminSync = () => {
       });
       const data = await response.json();
       
-      if (data.logs && data.logs.length > 0) {
-        setLogs(data.logs.slice(0, 10)); // Last 10 syncs
-        setLastSync(data.logs[0].created_at);
-        setMinerCount(data.logs[0].miners_added);
+      if (data.sync_logs && data.sync_logs.length > 0) {
+        setLogs(data.sync_logs.slice(0, 10)); // Last 10 syncs
+        setLastSync(data.sync_logs[0].created_at);
+        setMinerCount(data.sync_logs[0].miners_added);
       }
     } catch (error) {
       console.error('Error loading sync info:', error);

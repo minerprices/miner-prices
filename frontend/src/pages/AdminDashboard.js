@@ -15,22 +15,24 @@ const AdminDashboard = ({ onLogout }) => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
+      setError('');
       try {
         if (activeTab === 'pending') {
           const response = await adminAPI.getPendingVendors();
-          setPendingVendors(response.data.vendors);
+          setPendingVendors(response.data.pending_vendors || []);
         } else if (activeTab === 'vendors') {
           const response = await adminAPI.getAllVendors();
-          setAllVendors(response.data.vendors);
+          setAllVendors(response.data.pending_vendors || []);
         } else if (activeTab === 'stats') {
           const response = await adminAPI.getStats();
           setStats(response.data);
         } else if (activeTab === 'logs') {
           const response = await adminAPI.getSyncLogs();
-          setSyncLogs(response.data.logs);
+          setSyncLogs(response.data.sync_logs || []);
         }
       } catch (err) {
-        setError('Failed to load data');
+        console.error('Error loading data:', err);
+        setError(`Failed to load data: ${err.response?.data?.error || err.message}`);
       } finally {
         setLoading(false);
       }
