@@ -9,6 +9,7 @@ import Locations from './pages/Locations';
 import Profitability from './pages/Profitability';
 import Calculator from './pages/Calculator';
 import Vendors from './pages/Vendors';
+import Tools from './pages/Tools';
 import VendorLogin from './pages/VendorLogin';
 import VendorRegister from './pages/VendorRegister';
 import VendorDashboard from './pages/VendorDashboard';
@@ -39,6 +40,7 @@ function App() {
         <Route path="/profitability" element={<Profitability />} />
         <Route path="/calculator" element={<Calculator />} />
         <Route path="/vendors" element={<Vendors />} />
+        <Route path="/tools" element={<Tools />} />
         
         <Route path="/vendor/login" element={<VendorLogin onLogin={handleLogin} />} />
         <Route path="/vendor/register" element={<VendorRegister onLogin={handleLogin} />} />
