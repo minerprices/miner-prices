@@ -1,97 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const { db } = require('../db/sqlite-init');
 
-// Setup persistent upload directory
-// On Render, this will be mounted to /var/data/uploads (persistent disk)
-// Locally, use ./data/uploads
-const uploadDir = process.env.NODE_ENV === 'production' 
-  ? '/var/data/uploads' 
-  : path.join(__dirname, '../../data/uploads');
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const filename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${path.extname(file.originalname)}`;
-    cb(null, filename);
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    cb(null, allowed.includes(file.mimetype));
-  }
-});
-
-// ===== SPECIFIC ROUTES FIRST =====
-
-// POST /:id/upload-image - Upload image and assign to miner
-router.post('/:id/upload-image', upload.single('image'), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    const minerId = req.params.id;
-    const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(minerId);
-    if (!miner) {
-      fs.unlinkSync(req.file.path);
-      return res.status(404).json({ error: 'Miner not found' });
-    }
-
-    // Save image URL to database
-    const imageUrl = `/uploads/${req.file.filename}`;
-    db.prepare('UPDATE miners SET image_url = ? WHERE id = ?').run(imageUrl, minerId);
-
-    res.json({
-      success: true,
-      message: 'Image uploaded and assigned',
-      minerId,
-      imageUrl,
-      filename: req.file.filename
-    });
-  } catch (error) {
-    console.error('Upload error:', error);
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// PUT /:id - Update miner image_url (with external URL)
-router.put('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { image_url } = req.body;
-
-    const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(id);
-    if (!miner) {
-      return res.status(404).json({ error: 'Miner not found' });
-    }
-
-    // Save the external URL directly to database
-    db.prepare('UPDATE miners SET image_url = ? WHERE id = ?').run(image_url, id);
-    res.json({ success: true, message: 'Image URL saved', id, image_url });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ===== GENERIC ROUTES AFTER =====
+// ===== ROUTES =====
 
 // GET / - Get all miners
 router.get('/', async (req, res) => {
@@ -137,6 +48,25 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Miners error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /:id - Update miner (set image_url from external storage)
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { image_url } = req.body;
+
+    const miner = db.prepare('SELECT id FROM miners WHERE id = ?').get(id);
+    if (!miner) {
+      return res.status(404).json({ error: 'Miner not found' });
+    }
+
+    // Save external URL to database
+    db.prepare('UPDATE miners SET image_url = ? WHERE id = ?').run(image_url, id);
+    res.json({ success: true, message: 'Image URL saved', id, image_url });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -189,19 +119,6 @@ router.get('/:id/full', async (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Failed to get miner details' });
-  }
-});
-
-// GET /api/algorithms - Get all algorithms
-router.get('/api/algorithms', async (req, res) => {
-  try {
-    const algorithms = db.prepare('SELECT DISTINCT algorithm FROM miners WHERE algorithm IS NOT NULL').all();
-
-    res.json({
-      algorithms: algorithms.map(a => a.algorithm) || []
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
