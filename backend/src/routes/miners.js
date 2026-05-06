@@ -1,37 +1,40 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db/db');
+const { createClient } = require('@supabase/supabase-js');
 
-// Get all active miners (public)
+const supabaseUrl = 'https://huzfnrgfcxlwvmrkoyge.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1emZucmdmY3hsd3ZtcmtveWdlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzkyNDIzMywiZXhwIjoyMDkzNTAwMjMzfQ.y8vbUqoAy4dyq5hn3bvCHp4jMaQ9tTGErr_y2fx6Bfk';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Get all miners
 router.get('/', async (req, res) => {
   try {
     const { algorithm, search } = req.query;
-    let query = 'SELECT * FROM miners WHERE is_active = true';
-    const params = [];
+
+    let query = supabase.from('miners').select('*');
 
     if (algorithm) {
-      query += ' AND algorithm = $1';
-      params.push(algorithm);
+      query = query.eq('algorithm', algorithm);
     }
 
     if (search) {
-      if (params.length > 0) {
-        query += ` AND name ILIKE $${params.length + 1}`;
-      } else {
-        query += ' AND name ILIKE $1';
-      }
-      params.push(`%${search}%`);
+      query = query.ilike('name', `%${search}%`);
     }
 
-    query += ' ORDER BY name ASC LIMIT 100';
+    const { data, error } = await query.limit(100);
 
-    const result = await db.query(query, params);
+    if (error) {
+      console.error('Miners fetch error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
     res.json({
-      miners: result.rows,
-      count: result.rows.length,
+      miners: data || [],
+      count: data?.length || 0
     });
   } catch (error) {
-    console.error('Get miners error:', error);
+    console.error('Miners error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -39,91 +42,37 @@ router.get('/', async (req, res) => {
 // Get single miner
 router.get('/:id', async (req, res) => {
   try {
-    const result = await db.query(
-      'SELECT * FROM miners WHERE id = $1 AND is_active = true',
-      [req.params.id]
-    );
+    const { data, error } = await supabase
+      .from('miners')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
 
-    if (result.rows.length === 0) {
+    if (error) {
       return res.status(404).json({ error: 'Miner not found' });
     }
 
-    res.json(result.rows[0]);
+    res.json(data);
   } catch (error) {
-    console.error('Get miner error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Get profitability estimates for a miner at specific locations
-router.get('/:id/profitability', async (req, res) => {
-  try {
-    const minerId = req.params.id;
-
-    const minerResult = await db.query(
-      'SELECT * FROM miners WHERE id = $1',
-      [minerId]
-    );
-
-    if (minerResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Miner not found' });
-    }
-
-    const miner = minerResult.rows[0];
-
-    const locationsResult = await db.query(
-      `SELECT id, vendor_id, name, city, country, hosting_fee_per_kwh, setup_fee
-       FROM locations
-       WHERE is_active = true
-       ORDER BY hosting_fee_per_kwh ASC`,
-      []
-    );
-
-    const profitability = locationsResult.rows.map((loc) => {
-      const dailyEnergy = (miner.power_consumption / 1000) * 24;
-      const dailyHostingCost = dailyEnergy * loc.hosting_fee_per_kwh;
-      const monthlyHostingCost = dailyHostingCost * 30;
-      const monthlySetupAllocation = loc.setup_fee ? loc.setup_fee / 12 : 0;
-
-      return {
-        location: {
-          id: loc.id,
-          name: loc.name,
-          city: loc.city,
-          country: loc.country,
-        },
-        dailyEnergyCost: dailyHostingCost,
-        monthlyHostingCost,
-        monthlySetupAllocation,
-        totalMonthlyCost: monthlyHostingCost + monthlySetupAllocation,
-      };
-    });
-
-    res.json({
-      miner: {
-        id: miner.id,
-        name: miner.name,
-        powerConsumption: miner.power_consumption,
-      },
-      profitability: profitability.slice(0, 10), // Top 10 cheapest
-    });
-  } catch (error) {
-    console.error('Get profitability error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get available algorithms (for filters)
+// Get algorithms
 router.get('/api/algorithms', async (req, res) => {
   try {
-    const result = await db.query(
-      'SELECT DISTINCT algorithm FROM miners WHERE is_active = true ORDER BY algorithm'
-    );
-    res.json({
-      algorithms: result.rows.map((r) => r.algorithm),
-    });
+    const { data, error } = await supabase
+      .from('miners')
+      .select('algorithm')
+      .is_not('algorithm', null);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    const algorithms = [...new Set(data?.map(m => m.algorithm) || [])];
+    res.json({ algorithms });
   } catch (error) {
-    console.error('Get algorithms error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
