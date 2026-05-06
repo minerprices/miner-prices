@@ -17,8 +17,8 @@ router.get('/setup', async (req, res) => {
     const bcrypt = require('bcryptjs');
     const hash = await bcrypt.hash('admin123', 10);
 
-    const { data, error } = await axios.post(
-      `${SUPABASE_URL}/rest/v1/admins?upsert=true`,
+    const response = await axios.post(
+      `${SUPABASE_URL}/rest/v1/admins`,
       {
         email: 'admin@minerprices.com',
         password_hash: hash,
@@ -31,15 +31,17 @@ router.get('/setup', async (req, res) => {
           'Prefer': 'return=representation'
         }
       }
-    );
+    ).catch(err => {
+      // If conflict (already exists), that's OK
+      if (err.response?.status === 409) {
+        return { data: [{ email: 'admin@minerprices.com' }] };
+      }
+      throw err;
+    });
+    
+    const { data } = response;
 
-    if (error) {
-      console.error('Error:', error);
-      return res.status(500).json({
-        status: 'error',
-        message: error.message || 'Failed to initialize'
-      });
-    }
+
 
     res.json({
       status: 'success',
