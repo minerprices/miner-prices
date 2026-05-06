@@ -26,6 +26,12 @@ const AdminLogin = ({ onLogin }) => {
     }
   };
 
+  const handleQuickLogin = () => {
+    // Development mode: quick admin access
+    onLogin('dev-token-admin');
+    navigate('/admin/dashboard');
+  };
+
   return (
     <div className="container">
       <form className="auth-form" onSubmit={handleSubmit}>
@@ -58,6 +64,17 @@ const AdminLogin = ({ onLogin }) => {
         <button type="submit" disabled={loading}>
           {loading ? 'Logging in...' : 'Login'}
         </button>
+
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <p style={{ fontSize: '12px', color: '#666' }}>Development Mode</p>
+          <button 
+            type="button"
+            onClick={handleQuickLogin}
+            style={{ backgroundColor: '#ff9800', marginTop: '10px' }}
+          >
+            🚀 Quick Admin Access (Dev)
+          </button>
+        </div>
       </form>
     </div>
   );
