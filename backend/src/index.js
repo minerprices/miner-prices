@@ -63,6 +63,18 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Test image endpoints status
+app.get('/api/status', (req, res) => {
+  res.json({ 
+    message: 'Image upload endpoints are ready',
+    endpoints: {
+      upload: 'POST /api/upload',
+      list: 'GET /api/images/list',
+      delete: 'DELETE /api/images/:filename'
+    }
+  });
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
