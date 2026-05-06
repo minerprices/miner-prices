@@ -80,7 +80,7 @@ const Miners = () => {
       ) : (
         <div className="miners-grid">
           {miners.map((miner) => (
-            <Link to={`/miner/${miner.id}`} key={miner.id} className="miner-card-link">
+            <Link to={`/miner/${miner.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} key={miner.id} className="miner-card-link">
               <div className="miner-card">
                 {miner.image_url && (
                   <img 

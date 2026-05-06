@@ -5,7 +5,7 @@ import './App.css';
 // Pages
 import Home from './pages/Home';
 import Miners from './pages/Miners';
-import MinerDetail from './pages/MinerDetail';
+import MinerDetailNew from './pages/MinerDetailNew';
 import Locations from './pages/Locations';
 import Profitability from './pages/Profitability';
 import Calculator from './pages/Calculator';
@@ -37,7 +37,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/miners" element={<Miners />} />
-        <Route path="/miner/:id" element={<MinerDetail />} />
+        <Route path="/miner/:slug" element={<MinerDetailNew />} />
         <Route path="/locations" element={<Locations />} />
         <Route path="/profitability" element={<Profitability />} />
         <Route path="/calculator" element={<Calculator />} />
