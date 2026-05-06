@@ -23,6 +23,7 @@ const Navigation = ({ isLoggedIn, onLogout }) => {
           <li><Link to="/profitability">Profitability</Link></li>
           <li><Link to="/tools">Tools</Link></li>
           <li><Link to="/calculator">Calculator</Link></li>
+          <li><Link to="/images">📸 Images</Link></li>
           <li><Link to="/vendors">Vendors</Link></li>
           <li><Link to="/locations">Locations</Link></li>
           
