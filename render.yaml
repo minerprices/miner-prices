@@ -1,38 +1,11 @@
 services:
   - type: web
-    name: miner-prices-backend
+    name: miner-prices-upload
     runtime: node
-    plan: standard
-    buildCommand: "cd backend && npm install"
-    startCommand: "cd backend && npm start"
+    buildCommand: npm install
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: IMGBB_API_KEY
-        value: 69bd79dca2a9c35e7d987580c736319d
-      - key: DATABASE_URL
-        fromDatabase:
-          name: minerprices-db
-          property: connectionString
-    disk:
-      name: miner-images
-      mountPath: /var/data/uploads
-      sizeGB: 5
-    routes:
-      - path: /
-        priority: 100
-
-  - type: web
-    name: miner-prices-frontend
-    runtime: static
-    buildCommand: "cd frontend && npm install && npm run build"
-    staticPublicPath: frontend/build
-    routes:
-      - path: /
-        priority: 100
-
-databases:
-  - name: minerprices-db
-    databaseName: minerprices
-    user: minerprices
-    plan: free
+      - key: PORT
+        value: 3000
